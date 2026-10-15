@@ -22,6 +22,7 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 
 - Sign-in is GitHub OAuth only. Profile changes happen on GitHub ("Edit on GitHub"), then sync at next login.
 - Everything except the landing page requires login.
+- First sign-in leads to a short setup at `/onboarding`: confirm the mirrored profile, pick a color, follow a few suggested developers, learn the composer, `?` shortcuts and terminal commits, then land on the log (or the page the user was headed to). Skippable at any step (Skip setup or Esc); finishing or skipping ends it for good. Accounts that existed before it never see it.
 - Profile links (`/@{username}`) and links to approved commits (`/@{username}/commits/{id}`) unfurl with a link preview (the author and their bio or counts, or the commit body and reply count) for guests and crawlers; a guest opening one sees the landing page, and the profile or commit itself stays behind login. Pending and rejected commits are a 404 for guests.
 - Two logs: **Following** (my commits plus people I follow) and **Everyone** (all commits), newest first, infinite scroll.
 - Profiles live at `/@{username}` with commit, following, and follower counts, a commit activity graph with longest and current streaks, and Commits and Replies tabs. Commits is the default and lists the user's top-level commits; `?tab=replies` lists their authored replies with visible parent context. Both feeds use infinite scroll.
