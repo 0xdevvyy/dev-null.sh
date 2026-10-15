@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage, usePoll } from '@inertiajs/react';
 import { ArrowUp } from 'lucide-react';
+import { useEffect } from 'react';
 import LogController from '@/actions/App/Http/Controllers/LogController';
 import UserFollowController from '@/actions/App/Http/Controllers/UserFollowController';
 import { CommitComposer } from '@/components/commit-composer';
@@ -27,7 +28,7 @@ export default function Show({
     const newestId = commits.data[0]?.id;
     const firstSeenId = useLastVisit(auth.user.id, log, commits.data);
 
-    usePoll(
+    const { stop: stopPolling } = usePoll(
         30_000,
         () => ({
             only: ['newCommitsCount'],
@@ -35,6 +36,16 @@ export default function Show({
             preserveUrl: true,
         }),
         { autoStart: newestId !== undefined },
+    );
+
+    useEffect(
+        () =>
+            router.on('location', (event) => {
+                if (event.detail.versionChange) {
+                    stopPolling();
+                }
+            }),
+        [stopPolling],
     );
 
     const showNewCommits = () =>
