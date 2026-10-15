@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Globe, House, Menu } from 'lucide-react';
-import TimelineController from '@/actions/App/Http/Controllers/TimelineController';
+import LogController from '@/actions/App/Http/Controllers/LogController';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -35,13 +35,13 @@ type Props = {
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Timeline',
-        href: TimelineController.show('following'),
+        title: 'Log',
+        href: LogController.show('following'),
         icon: House,
     },
     {
         title: 'Explore',
-        href: TimelineController.show('everyone'),
+        href: LogController.show('everyone'),
         icon: Globe,
     },
 ];
@@ -103,7 +103,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <Link
-                        href={TimelineController.show('following')}
+                        href={LogController.show('following')}
                         prefetch
                         className="flex items-center space-x-2"
                     >

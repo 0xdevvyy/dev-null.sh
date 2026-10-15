@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Globe, House, UserRound } from 'lucide-react';
-import TimelineController from '@/actions/App/Http/Controllers/TimelineController';
+import LogController from '@/actions/App/Http/Controllers/LogController';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -21,13 +21,13 @@ export function AppSidebar() {
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Timeline',
-            href: TimelineController.show('following'),
+            title: 'Log',
+            href: LogController.show('following'),
             icon: House,
         },
         {
             title: 'Explore',
-            href: TimelineController.show('everyone'),
+            href: LogController.show('everyone'),
             icon: Globe,
         },
         {
@@ -44,7 +44,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link
-                                href={TimelineController.show('following')}
+                                href={LogController.show('following')}
                                 prefetch
                             >
                                 <AppLogo />

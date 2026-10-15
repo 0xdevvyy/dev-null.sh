@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Queries;
 
-use App\Models\Post;
+use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
-interface TimelineQuery
+interface LogQuery
 {
     /**
-     * @return Builder<Post>
+     * @return Builder<Commit>
      */
     public function builder(User $user): Builder;
 }

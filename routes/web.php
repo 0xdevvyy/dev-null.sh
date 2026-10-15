@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\PostController;
+use App\Http\Controllers\CommitController;
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\SessionController;
-use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserFollowController;
 use App\Http\Controllers\UserProfileController;
@@ -27,15 +27,15 @@ Route::middleware('auth')->group(function (): void {
     Route::post('logout', [SessionController::class, 'destroy'])
         ->name('logout');
 
-    // Timeline...
-    Route::get('timelines/{timeline}', [TimelineController::class, 'show'])->name('timeline.show');
+    // Log...
+    Route::get('log/{log}', [LogController::class, 'show'])->name('log.show');
 
-    // Post...
-    Route::post('posts', [PostController::class, 'store'])
-        ->middleware('throttle:posts')
-        ->name('post.store');
-    Route::delete('posts/{post}', [PostController::class, 'destroy'])
-        ->name('post.destroy');
+    // Commit...
+    Route::post('commits', [CommitController::class, 'store'])
+        ->middleware('throttle:commits')
+        ->name('commit.store');
+    Route::delete('commits/{commit}', [CommitController::class, 'destroy'])
+        ->name('commit.destroy');
 
     // User Profile...
     Route::get('settings', fn () => to_route('user-profile.edit'));

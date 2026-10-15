@@ -1,42 +1,42 @@
 import { Head, Link } from '@inertiajs/react';
-import TimelineController from '@/actions/App/Http/Controllers/TimelineController';
-import { PostComposer } from '@/components/post-composer';
-import { PostFeed } from '@/components/post-feed';
+import LogController from '@/actions/App/Http/Controllers/LogController';
+import { CommitComposer } from '@/components/commit-composer';
+import { CommitFeed } from '@/components/commit-feed';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import type { CursorPaginated, Post, Timeline } from '@/types';
+import type { Commit, CursorPaginated, Log } from '@/types';
 
-const tabs: { timeline: Timeline; title: string }[] = [
-    { timeline: 'following', title: 'Following' },
-    { timeline: 'everyone', title: 'Everyone' },
+const tabs: { log: Log; title: string }[] = [
+    { log: 'following', title: 'Following' },
+    { log: 'everyone', title: 'Everyone' },
 ];
 
 export default function Show({
-    timeline,
-    posts,
+    log,
+    commits,
 }: {
-    timeline: Timeline;
-    posts: CursorPaginated<Post>;
+    log: Log;
+    commits: CursorPaginated<Commit>;
 }) {
     return (
         <>
-            <Head title={timeline === 'following' ? 'Timeline' : 'Explore'} />
+            <Head title={log === 'following' ? 'Log' : 'Explore'} />
 
             <div className="mx-auto w-full max-w-2xl border-x border-sidebar-border/70 dark:border-sidebar-border">
                 <nav
                     className="flex border-b border-sidebar-border/70 dark:border-sidebar-border"
-                    aria-label="Timelines"
+                    aria-label="Logs"
                 >
                     {tabs.map((tab) => (
                         <Link
-                            key={tab.timeline}
-                            href={TimelineController.show(tab.timeline)}
+                            key={tab.log}
+                            href={LogController.show(tab.log)}
                             prefetch
                             className={cn(
                                 'flex-1 py-3 text-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent',
                                 {
                                     'border-b-2 border-foreground text-foreground':
-                                        tab.timeline === timeline,
+                                        tab.log === log,
                                 },
                             )}
                         >
@@ -45,25 +45,25 @@ export default function Show({
                     ))}
                 </nav>
 
-                <PostComposer />
+                <CommitComposer />
 
-                <PostFeed
-                    posts={posts}
+                <CommitFeed
+                    commits={commits}
                     empty={
-                        timeline === 'following' ? (
+                        log === 'following' ? (
                             <>
-                                Your timeline is empty. Follow some developers
-                                from the{' '}
+                                Your log is empty. Follow some developers from
+                                the{' '}
                                 <Link
-                                    href={TimelineController.show('everyone')}
+                                    href={LogController.show('everyone')}
                                     className="font-medium text-foreground underline underline-offset-4"
                                 >
                                     Everyone
                                 </Link>{' '}
-                                timeline.
+                                log.
                             </>
                         ) : (
-                            'Nobody has posted anything yet. Be the first!'
+                            'Nobody has committed anything yet. Be the first!'
                         )
                     }
                 />

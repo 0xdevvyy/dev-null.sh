@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\Timeline;
+use App\Enums\Log;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->redirectGuestsTo(fn (): string => route('home'));
-        $middleware->redirectUsersTo(fn (): string => route('timeline.show', Timeline::Following));
+        $middleware->redirectUsersTo(fn (): string => route('log.show', Log::Following));
 
         $middleware->web(append: [
             HandleAppearance::class,

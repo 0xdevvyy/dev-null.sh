@@ -1,9 +1,10 @@
 import type { User } from '@/types/auth';
 
-export type Post = {
+export type Commit = {
     id: string;
     user_id: string;
-    body: string;
+    title: string;
+    description: string | null;
     created_at: string;
     updated_at: string;
     user: User;

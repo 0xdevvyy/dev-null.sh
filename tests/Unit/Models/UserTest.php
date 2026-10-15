@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\Post;
+use App\Models\Commit;
 use App\Models\User;
 
 test('to array', function (): void {
@@ -23,12 +23,12 @@ test('to array', function (): void {
         ]);
 });
 
-it('has posts', function (): void {
+it('has commits', function (): void {
     $user = User::factory()->create();
-    Post::factory()->for($user)->count(2)->create();
-    Post::factory()->create();
+    Commit::factory()->for($user)->count(2)->create();
+    Commit::factory()->create();
 
-    expect($user->posts)->toHaveCount(2);
+    expect($user->commits)->toHaveCount(2);
 });
 
 it('has following and followers', function (): void {

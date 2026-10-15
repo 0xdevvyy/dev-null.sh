@@ -28,7 +28,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read string|null $remember_token
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
- * @property-read Collection<int, Post> $posts
+ * @property-read Collection<int, Commit> $commits
  * @property-read Collection<int, User> $following
  * @property-read Collection<int, User> $followers
  */
@@ -67,11 +67,11 @@ final class User extends Authenticatable
     }
 
     /**
-     * @return HasMany<Post, $this>
+     * @return HasMany<Commit, $this>
      */
-    public function posts(): HasMany
+    public function commits(): HasMany
     {
-        return $this->hasMany(Post::class);
+        return $this->hasMany(Commit::class);
     }
 
     /**

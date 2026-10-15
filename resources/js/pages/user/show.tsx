@@ -1,21 +1,21 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Building2, CalendarDays, Link2, MapPin } from 'lucide-react';
 import UserFollowController from '@/actions/App/Http/Controllers/UserFollowController';
+import { CommitFeed } from '@/components/commit-feed';
 import { GitHubIcon } from '@/components/github-icon';
-import { PostFeed } from '@/components/post-feed';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import AppLayout from '@/layouts/app-layout';
-import type { CursorPaginated, Post, Profile } from '@/types';
+import type { Commit, CursorPaginated, Profile } from '@/types';
 
 export default function Show({
     user,
     isFollowing,
-    posts,
+    commits,
 }: {
     user: Profile;
     isFollowing: boolean;
-    posts: CursorPaginated<Post>;
+    commits: CursorPaginated<Commit>;
 }) {
     const { auth } = usePage().props;
     const isCurrentUser = auth.user.id === user.id;
@@ -123,10 +123,12 @@ export default function Show({
                     <ul className="flex gap-4 text-sm">
                         <li>
                             <span className="font-semibold">
-                                {user.posts_count}
+                                {user.commits_count}
                             </span>{' '}
                             <span className="text-muted-foreground">
-                                {user.posts_count === 1 ? 'Post' : 'Posts'}
+                                {user.commits_count === 1
+                                    ? 'Commit'
+                                    : 'Commits'}
                             </span>
                         </li>
                         <li>
@@ -150,12 +152,12 @@ export default function Show({
                     </ul>
                 </header>
 
-                <PostFeed
-                    posts={posts}
+                <CommitFeed
+                    commits={commits}
                     empty={
                         isCurrentUser
-                            ? "You haven't posted anything yet."
-                            : `@${user.username} hasn't posted anything yet.`
+                            ? "You haven't committed anything yet."
+                            : `@${user.username} hasn't committed anything yet.`
                     }
                 />
             </div>

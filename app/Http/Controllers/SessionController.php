@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\SyncGitHubUser;
-use App\Enums\Timeline;
+use App\Enums\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,7 +42,7 @@ final readonly class SessionController
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('timeline.show', Timeline::Following, absolute: false));
+        return redirect()->intended(route('log.show', Log::Following, absolute: false));
     }
 
     public function destroy(Request $request): RedirectResponse

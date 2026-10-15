@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\Timeline;
+use App\Enums\Log;
 use App\Models\User;
 
 it('renders the landing page for guests', function (): void {
@@ -13,9 +13,9 @@ it('renders the landing page for guests', function (): void {
             ->component('welcome'));
 });
 
-it('redirects authenticated users to the timeline', function (): void {
+it('redirects authenticated users to the log', function (): void {
     $response = $this->actingAs(User::factory()->create())
         ->get(route('home'));
 
-    $response->assertRedirectToRoute('timeline.show', Timeline::Following);
+    $response->assertRedirectToRoute('log.show', Log::Following);
 });

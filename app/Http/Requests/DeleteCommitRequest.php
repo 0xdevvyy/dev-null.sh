@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\Post;
+use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
-final class DeletePostRequest extends FormRequest
+final class DeleteCommitRequest extends FormRequest
 {
     public function authorize(): bool
     {
         $user = $this->user();
         assert($user instanceof User);
 
-        $post = $this->route('post');
-        assert($post instanceof Post);
+        $commit = $this->route('commit');
+        assert($commit instanceof Commit);
 
-        return $user->id === $post->user_id;
+        return $user->id === $commit->user_id;
     }
 
     /**

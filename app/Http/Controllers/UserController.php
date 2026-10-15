@@ -17,12 +17,12 @@ final readonly class UserController
 {
     public function show(#[CurrentUser] User $currentUser, User $user): Response
     {
-        $user->loadCount(['posts', 'followers', 'following']);
+        $user->loadCount(['commits', 'followers', 'following']);
 
         return Inertia::render('user/show', [
             'user' => $user,
             'isFollowing' => $currentUser->isFollowing($user),
-            'posts' => Inertia::scroll(fn () => $user->posts()
+            'commits' => Inertia::scroll(fn () => $user->commits()
                 ->with('user')
                 ->latest()
                 ->latest('id')

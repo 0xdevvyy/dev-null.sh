@@ -1,17 +1,17 @@
 import { InfiniteScroll } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { PostCard } from '@/components/post-card';
+import { CommitCard } from '@/components/commit-card';
 import { Spinner } from '@/components/ui/spinner';
-import type { CursorPaginated, Post } from '@/types';
+import type { Commit, CursorPaginated } from '@/types';
 
-export function PostFeed({
-    posts,
+export function CommitFeed({
+    commits,
     empty,
 }: {
-    posts: CursorPaginated<Post>;
+    commits: CursorPaginated<Commit>;
     empty: ReactNode;
 }) {
-    if (posts.data.length === 0) {
+    if (commits.data.length === 0) {
         return (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">
                 {empty}
@@ -21,7 +21,7 @@ export function PostFeed({
 
     return (
         <InfiniteScroll
-            data="posts"
+            data="commits"
             onlyNext
             preserveUrl
             loading={
@@ -30,8 +30,8 @@ export function PostFeed({
                 </div>
             }
         >
-            {posts.data.map((post) => (
-                <PostCard key={post.id} post={post} />
+            {commits.data.map((commit) => (
+                <CommitCard key={commit.id} commit={commit} />
             ))}
         </InfiniteScroll>
     );
