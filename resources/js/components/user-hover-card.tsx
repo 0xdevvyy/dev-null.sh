@@ -63,10 +63,12 @@ export function UserHoverCard({
     user,
     children,
     className,
+    onHoverChange,
 }: {
     user: User;
     children: ReactNode;
     className?: string;
+    onHoverChange?: (isHovering: boolean) => void;
 }) {
     const triggerRef = useRef<HTMLSpanElement>(null);
     const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -128,8 +130,14 @@ export function UserHoverCard({
         <>
             <span
                 ref={triggerRef}
-                onMouseEnter={scheduleOpen}
-                onMouseLeave={scheduleClose}
+                onMouseEnter={() => {
+                    onHoverChange?.(true);
+                    scheduleOpen();
+                }}
+                onMouseLeave={() => {
+                    onHoverChange?.(false);
+                    scheduleClose();
+                }}
                 className={className}
             >
                 {children}

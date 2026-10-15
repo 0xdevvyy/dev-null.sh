@@ -85,16 +85,14 @@ export function CommitCard({
                 />
 
                 <div className="flex min-w-0 flex-1 gap-3 border-b py-3 pr-4">
-                    <UserHoverCard user={commit.user} className="shrink-0">
+                    <UserHoverCard
+                        user={commit.user}
+                        className="shrink-0"
+                        onHoverChange={onAuthorHover}
+                    >
                         <Link
                             href={show(commit.user)}
                             className="shrink-0 rounded-full"
-                            onMouseEnter={
-                                onAuthorHover && (() => onAuthorHover(true))
-                            }
-                            onMouseLeave={
-                                onAuthorHover && (() => onAuthorHover(false))
-                            }
                         >
                             <UserAvatar
                                 user={commit.user}
@@ -107,7 +105,8 @@ export function CommitCard({
                         <div className="flex items-baseline gap-1.5 text-[15px]">
                             <UserHoverCard
                                 user={commit.user}
-                                className="min-w-0 truncate"
+                                className="flex min-w-0 items-baseline gap-1.5"
+                                onHoverChange={onAuthorHover}
                             >
                                 <Link
                                     href={show(commit.user)}
@@ -115,10 +114,14 @@ export function CommitCard({
                                 >
                                     {commit.user.name}
                                 </Link>
+                                <Link
+                                    href={show(commit.user)}
+                                    tabIndex={-1}
+                                    className="truncate font-mono text-[13px] text-muted-foreground"
+                                >
+                                    @{commit.user.username}
+                                </Link>
                             </UserHoverCard>
-                            <span className="truncate font-mono text-[13px] text-muted-foreground">
-                                @{commit.user.username}
-                            </span>
                             <span aria-hidden className="text-muted-foreground">
                                 ·
                             </span>

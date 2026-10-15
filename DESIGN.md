@@ -291,7 +291,7 @@ Below the profile header: a GitHub-style 53-week grid (Sunday-first columns, Mon
 
 ### Log Interactions
 - **Day markers:** a row that keeps the rail running (no node) with a mono 12px label, "Today", "Yesterday", or "Tue, Oct 13", wherever the local day changes between commits.
-- **Author highlight:** hovering a node or avatar keeps that author's lane at full strength and fades every other node and segment to 30% opacity (200ms).
+- **Author highlight:** hovering a node, avatar, name, or handle keeps that author's lane at full strength and fades every other node and segment to 30% opacity (200ms).
 - **New commits pill:** polling every 30s; when commits arrive, a Commit Blue pill ("↑ 3 new commits") hangs under the tabs and reloads the log from the top.
 - **Commit toast:** after committing, a mono toast prints `[log <hash>] <title>`, the way `git commit` reports.
 - **Composer hints:** an amber 13px line under the title when it passes 50 characters or ends with a period. Advisory only, never blocking.
@@ -301,7 +301,7 @@ Below the profile header: a GitHub-style 53-week grid (Sunday-first columns, Mon
 - **Activity tooltip:** one dark tooltip (Ink on Background inverted) follows the hovered cell, edge-aligned near the ends; hovering a day tints that day's commits in the profile feed with Primary Soft.
 
 ### User Hover Card
-Hovering an avatar or name (mouse only, 450ms delay, 200ms grace to move into it) opens a 304px Popover card below the trigger, flipping above near the viewport bottom: a 56px avatar ringed in the user's lane, Follow / Following (Unfollow on hover) top right, name, mono handle with lane dot and a "Follows you" chip, a 3-line bio, and mono counts linking to following and followers. Follow toggles optimistically and rolls back on error. Closes on scroll, Escape, or leaving.
+Hovering an avatar, name, or handle (mouse only, 450ms delay, 200ms grace to move into it) opens a 304px Popover card below the trigger, flipping above near the viewport bottom: a 56px avatar ringed in the user's lane, Follow / Following (Unfollow on hover) top right, name, mono handle with lane dot and a "Follows you" chip, a 3-line bio, and mono counts linking to following and followers. Follow toggles optimistically and rolls back on error. Closes on scroll, Escape, or leaving.
 
 ## Do's and Don'ts
 
