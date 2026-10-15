@@ -2,7 +2,10 @@
 #
 # devnull commit: commit to devnull from your terminal.
 #
-#   curl -fsSL __DEVNULL_URL__/commit | bash -s -- 'It was DNS.'
+#   curl -fsSL __DEVNULL_URL__/commit | bash -s -- 'Hello world!'
+#   curl -fsSL __DEVNULL_URL__/commit | bash -s -- --reply 0be0130 'Agreed!'
+#
+# `--reply` takes the hash of a commit (as shown on devnull) or its link.
 #
 # There is no login: your commit is signed locally with an SSH key that is on your GitHub
 # account, and devnull checks the signature against the public keys GitHub publishes for you.
@@ -41,11 +44,23 @@ main() {
     command -v "$command" > /dev/null || fail "$command is required."
   done
 
+  local reply_to=""
+  if [ "${1:-}" = "--reply" ]; then
+    [ -n "${2:-}" ] || fail "Usage: curl -fsSL $DEVNULL_URL/commit | bash -s -- --reply <commit hash or link> 'Your reply'"
+    reply_to="$2"
+    shift 2
+  fi
+
+  # It goes on its own line of the signed payload.
+  case "$reply_to" in
+    *[!A-Za-z0-9:/._@-]*) fail "--reply takes the hash of a commit or its link." ;;
+  esac
+
   local message="$*"
 
   if [ -z "$message" ]; then
     { printf 'Commit message: ' > /dev/tty && IFS= read -r message < /dev/tty; } 2> /dev/null \
-      || fail "Usage: curl -fsSL $DEVNULL_URL/commit | bash -s -- 'It was DNS.'"
+      || fail "Usage: curl -fsSL $DEVNULL_URL/commit | bash -s -- 'Hello world!'"
   fi
 
   [ -n "$message" ] || fail "Aborting commit due to empty commit message."
@@ -99,7 +114,7 @@ main() {
 
   local nonce
   nonce="$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
-  printf '%s\n%s\n%s' "$(date +%s)" "$nonce" "$message" > "$TMP_DIR/commit"
+  printf '%s\n%s\n%s\n%s' "$(date +%s)" "$nonce" "$reply_to" "$message" > "$TMP_DIR/commit"
 
   # Passphrase prompts go to /dev/tty: keep ssh-keygen away from stdin, which is this script.
   if ! ssh-keygen -Y sign -n "$NAMESPACE" -f "$signing_key" "$TMP_DIR/commit" < /dev/null 2> "$TMP_DIR/ssh-keygen.log"; then

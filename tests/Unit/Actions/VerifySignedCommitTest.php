@@ -23,7 +23,17 @@ it('verifies a signed commit', function (): void {
     $commit = resolve(VerifySignedCommit::class)->handle($payload, $signature);
 
     expect($commit['user']->is($this->user))->toBeTrue()
+        ->and($commit['reply_to'])->toBeNull()
         ->and($commit['body'])->toBe("It was DNS.\n\nIt is always DNS.");
+});
+
+it('verifies a signed reply', function (): void {
+    ['payload' => $payload, 'signature' => $signature] = signedCommit($this->keyPair, 'Agreed!', replyTo: '0be0130');
+
+    $commit = resolve(VerifySignedCommit::class)->handle($payload, $signature);
+
+    expect($commit['reply_to'])->toBe('0be0130')
+        ->and($commit['body'])->toBe('Agreed!');
 });
 
 it('rejects an invalid signature', function (): void {
@@ -44,9 +54,9 @@ it('rejects malformed payloads', function (string $payload): void {
     expect(fn (): array => resolve(VerifySignedCommit::class)->handle($payload, $this->keyPair->sign($payload)))
         ->toThrow(InvalidArgumentException::class, 'Malformed payload.');
 })->with([
-    'missing body' => fn (): string => now()->getTimestamp()."\n".bin2hex(random_bytes(16)),
-    'invalid nonce' => fn (): string => now()->getTimestamp()."\nnonce\nIt was DNS.",
-    'invalid utf-8' => fn (): string => now()->getTimestamp()."\n".bin2hex(random_bytes(16))."\nIt was \xff DNS.",
+    'missing body' => fn (): string => now()->getTimestamp()."\n".bin2hex(random_bytes(16))."\n",
+    'invalid nonce' => fn (): string => now()->getTimestamp()."\nnonce\n\nIt was DNS.",
+    'invalid utf-8' => fn (): string => now()->getTimestamp()."\n".bin2hex(random_bytes(16))."\n\nIt was \xff DNS.",
 ]);
 
 it('rejects old or future timestamps', function (int $offset): void {
@@ -65,7 +75,7 @@ it('accepts small clock differences', function (int $offset): void {
 })->with([-300, 300]);
 
 it('rejects a non-numeric timestamp', function (): void {
-    $payload = "soon\n".bin2hex(random_bytes(16))."\nIt was DNS.";
+    $payload = "soon\n".bin2hex(random_bytes(16))."\n\nIt was DNS.";
 
     expect(fn (): array => resolve(VerifySignedCommit::class)->handle($payload, $this->keyPair->sign($payload)))
         ->toThrow(InvalidArgumentException::class, 'Signature expired. Check that your clock is right.');

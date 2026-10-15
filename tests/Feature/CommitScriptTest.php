@@ -100,7 +100,30 @@ it('commits with a key from ~/.ssh', function (): void {
         ->and($result->output())->toBe("Committed.\n")
         ->and(($this->calls)())->toContain("ssh-keygen -Y sign -n devnull-commit -f {$this->sandbox}/home/.ssh/id_ed25519 ")
         ->and(File::get("{$this->sandbox}/sent-candidates"))->toBe($this->publicKey->toOpenSsh()."\n")
-        ->and(File::get("{$this->sandbox}/sent-commit"))->toMatch('/^\d+\n[0-9a-f]{32}\nIt was DNS\.$/');
+        ->and(File::get("{$this->sandbox}/sent-commit"))->toMatch('/^\d+\n[0-9a-f]{32}\n\nIt was DNS\.$/');
+});
+
+it('replies to a commit', function (): void {
+    $result = ($this->runScript)($this->script, ['--reply', '0be0130', 'Agreed!']);
+
+    expect($result->exitCode())->toBe(0)
+        ->and(File::get("{$this->sandbox}/sent-commit"))->toMatch('/^\d+\n[0-9a-f]{32}\n0be0130\nAgreed!$/');
+});
+
+it('requires a commit to reply to', function (): void {
+    $result = ($this->runScript)($this->script, ['--reply']);
+
+    expect($result->exitCode())->toBe(1)
+        ->and($result->errorOutput())->toBe('devnull: Usage: curl -fsSL '.url('/')."/commit | bash -s -- --reply <commit hash or link> 'Your reply'\n")
+        ->and(($this->calls)())->toBe('');
+});
+
+it('only accepts commit hashes and links to reply to', function (): void {
+    $result = ($this->runScript)($this->script, ['--reply', "0be0130\nIt was not DNS.", 'Agreed!']);
+
+    expect($result->exitCode())->toBe(1)
+        ->and($result->errorOutput())->toBe("devnull: --reply takes the hash of a commit or its link.\n")
+        ->and(($this->calls)())->toBe('');
 });
 
 it('signs through the ssh agent when it has the key', function (): void {

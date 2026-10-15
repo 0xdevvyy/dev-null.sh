@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 final readonly class ScriptController
 {
     /**
-     * The `devnull commit` script: curl -fsSL https://devnull.laravel.cloud/commit | bash -s -- 'It was DNS.'
+     * The `devnull commit` script: curl -fsSL https://dev-null.sh/commit | bash -s -- 'Hello world!'
      */
     public function show(): Response
     {

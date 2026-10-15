@@ -26,7 +26,7 @@ use App\Http\Controllers\UserSearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// Commit from the terminal: curl -fsSL https://devnull.laravel.cloud/commit | bash -s -- 'It was DNS.'
+// Commit from the terminal: curl -fsSL https://dev-null.sh/commit | bash -s -- 'Hello world!'
 Route::get('commit', [ScriptController::class, 'show'])->name('cli-script.show');
 
 Route::middleware('guest')->group(function (): void {

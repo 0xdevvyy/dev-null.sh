@@ -13,7 +13,7 @@ use InvalidArgumentException;
 /**
  * Verifies a commit signed with `ssh-keygen -Y sign` by the `devnull commit` script.
  *
- * The signed payload is "<unix timestamp>\n<nonce>\n<body>".
+ * The signed payload is "<unix timestamp>\n<nonce>\n<commit to reply to, or empty>\n<body>".
  */
 final readonly class VerifySignedCommit
 {
@@ -27,7 +27,7 @@ final readonly class VerifySignedCommit
     }
 
     /**
-     * @return array{user: User, body: string}
+     * @return array{user: User, reply_to: string|null, body: string}
      */
     public function handle(string $payload, string $signature): array
     {
@@ -35,11 +35,11 @@ final readonly class VerifySignedCommit
 
         throw_unless($sshSignature->verify($payload, self::Namespace), InvalidArgumentException::class, 'Invalid signature.');
 
-        $parts = explode("\n", $payload, 3);
+        $parts = explode("\n", $payload, 4);
 
-        throw_if(count($parts) !== 3 || ! mb_check_encoding($payload, 'UTF-8'), InvalidArgumentException::class, 'Malformed payload.');
+        throw_if(count($parts) !== 4 || ! mb_check_encoding($payload, 'UTF-8'), InvalidArgumentException::class, 'Malformed payload.');
 
-        [$timestamp, $nonce, $body] = $parts;
+        [$timestamp, $nonce, $replyTo, $body] = $parts;
 
         throw_unless(
             ctype_digit($timestamp) && abs(now()->getTimestamp() - (int) $timestamp) <= self::MaxClockSkewSeconds,
@@ -66,6 +66,7 @@ final readonly class VerifySignedCommit
 
         return [
             'user' => $user,
+            'reply_to' => $replyTo === '' ? null : $replyTo,
             'body' => mb_trim($body),
         ];
     }

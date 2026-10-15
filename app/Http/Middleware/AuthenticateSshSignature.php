@@ -37,7 +37,10 @@ final readonly class AuthenticateSshSignature
 
         Auth::setUser($commit['user']);
 
-        $request->merge(['body' => $commit['body']]);
+        $request->merge([
+            'body' => $commit['body'],
+            'reply_to' => $commit['reply_to'],
+        ]);
 
         return $next($request);
     }

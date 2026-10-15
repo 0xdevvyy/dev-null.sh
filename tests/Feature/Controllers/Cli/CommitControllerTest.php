@@ -59,6 +59,28 @@ it('links to the commit when it is published right away', function (): void {
     expect($commit->status)->toBe(CommitStatus::Approved);
 });
 
+it('replies to a commit', function (): void {
+    $parent = Commit::factory()->create(['id' => '01a14036-b0fc-7085-95c9-6e52b0be0130']);
+
+    $response = postSignedCommit(signedCommit($this->keyPair, 'Agreed!', replyTo: '0be0130'));
+
+    $reply = $this->user->commits()->sole();
+
+    $response->assertCreated();
+
+    expect($reply->parent_id)->toBe($parent->id)
+        ->and($reply->body)->toBe('Agreed!');
+});
+
+it('fails to reply to an unknown commit', function (): void {
+    $response = postSignedCommit(signedCommit($this->keyPair, 'Agreed!', replyTo: '0be0130'));
+
+    $response->assertUnprocessable()
+        ->assertContent("There is no commit 0be0130 to reply to.\n");
+
+    expect(Commit::query()->count())->toBe(0);
+});
+
 it('rejects invalid signatures', function (): void {
     $commit = signedCommit($this->keyPair, 'It was DNS.');
 

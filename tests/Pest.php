@@ -58,11 +58,12 @@ function fakeGitHubSshKeys(User $user, array $keys = [], array $signingKeys = []
 /**
  * @return array{payload: string, signature: string}
  */
-function signedCommit(SshKeyPair $keyPair, string $body, ?int $timestamp = null, ?string $nonce = null): array
+function signedCommit(SshKeyPair $keyPair, string $body, ?int $timestamp = null, ?string $nonce = null, string $replyTo = ''): array
 {
     $payload = implode("\n", [
         $timestamp ?? now()->getTimestamp(),
         $nonce ?? bin2hex(random_bytes(16)),
+        $replyTo,
         $body,
     ]);
 
