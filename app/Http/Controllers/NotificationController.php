@@ -12,8 +12,6 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
-use function Illuminate\Support\defer;
-
 final readonly class NotificationController
 {
     /**
@@ -25,7 +23,7 @@ final readonly class NotificationController
             'notifications' => Inertia::scroll(function () use ($user, $action): CursorPaginator {
                 $notifications = $user->notifications()
                     ->relevant()
-                    ->with(['actor', 'commit.parent'])
+                    ->with(['actor', 'commit'])
                     ->latest()
                     ->latest('id')
                     ->cursorPaginate(20);

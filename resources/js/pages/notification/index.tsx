@@ -112,15 +112,9 @@ function NotificationItem({ notification }: { notification: Notification }) {
                 </p>
 
                 {notification.type === 'replied' && (
-                    <>
-                        <p className="mt-1 text-[15px] break-words whitespace-pre-line">
-                            {notification.commit.body}
-                        </p>
-                        <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                            <span aria-hidden>↳ </span>
-                            {notification.commit.parent.body}
-                        </p>
-                    </>
+                    <p className="mt-1 truncate text-[15px]">
+                        {notification.commit.body}
+                    </p>
                 )}
             </div>
         </Link>
