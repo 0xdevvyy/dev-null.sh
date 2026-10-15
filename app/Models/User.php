@@ -31,6 +31,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read Collection<int, Commit> $commits
  * @property-read Collection<int, User> $following
  * @property-read Collection<int, User> $followers
+ * @property-read Collection<int, Notification> $notifications
  */
 #[Hidden([
     'github_id',
@@ -88,6 +89,14 @@ final class User extends Authenticatable
     public function followers(): BelongsToMany
     {
         return $this->belongsToMany(self::class, 'follows', 'followed_id', 'follower_id')->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<Notification, $this>
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'recipient_id');
     }
 
     /**
