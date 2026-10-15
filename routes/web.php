@@ -86,3 +86,5 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('@{user:username}/follow', [UserFollowController::class, 'destroy'])
         ->name('user-follow.destroy');
 });
+
+Route::fallback(fn () => abort(404));
