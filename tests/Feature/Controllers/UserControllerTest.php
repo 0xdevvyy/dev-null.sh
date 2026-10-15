@@ -134,3 +134,46 @@ it('shows own pending and rejected commits', function (): void {
             ->where('activity.368.count', 3)
             ->has('commits.data', 3));
 });
+
+it('lists who a user is following', function (): void {
+    $user = User::factory()->create(['username' => 'octocat']);
+    $followed = User::factory()->create();
+    $user->following()->attach($followed);
+    $user->followers()->attach(User::factory()->create());
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get(route('user-following.index', $user));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('user/connections')
+            ->where('type', 'following')
+            ->where('user.username', 'octocat')
+            ->has('users.data', 1)
+            ->where('users.data.0.id', $followed->id));
+});
+
+it('lists a user\'s followers', function (): void {
+    $user = User::factory()->create(['username' => 'octocat']);
+    $follower = User::factory()->create();
+    $user->followers()->attach($follower);
+    $user->following()->attach(User::factory()->create());
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get(route('user-followers.index', $user));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('user/connections')
+            ->where('type', 'followers')
+            ->has('users.data', 1)
+            ->where('users.data.0.id', $follower->id)
+            ->missing('users.data.0.email'));
+});
+
+it('requires authentication to list follows', function (): void {
+    $user = User::factory()->create();
+
+    $this->get(route('user-following.index', $user))->assertRedirectToRoute('home');
+    $this->get(route('user-followers.index', $user))->assertRedirectToRoute('home');
+});
