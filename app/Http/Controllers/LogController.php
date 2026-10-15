@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Log;
+use App\Models\Commit;
 use App\Models\User;
 use App\Queries\SuggestedCommitsQuery;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -25,9 +26,10 @@ final readonly class LogController
                 ->cursorPaginate(20)),
             'newCommitsCount' => Inertia::optional(function () use ($request, $user, $log): int {
                 $since = $request->string('since')->value();
+                $seen = Str::isUuid($since) ? Commit::query()->find($since) : null;
 
-                return Str::isUuid($since)
-                    ? $log->query()->builder($user)->where('id', '>', $since)->count()
+                return $seen instanceof Commit
+                    ? $log->query()->builder($user)->where('created_at', '>', $seen->created_at)->count()
                     : 0;
             }),
             'suggestions' => fn (): Collection => $log === Log::Following && ! $user->following()->exists()

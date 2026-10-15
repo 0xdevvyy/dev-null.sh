@@ -86,6 +86,7 @@ it('counts commits newer than a given commit', function (): void {
 
     $seen = Commit::factory()->for($followed)->create(['created_at' => now()->subMinutes(5)]);
     Commit::factory()->for($followed)->count(2)->create();
+    Commit::factory()->for($followed)->create(['created_at' => now()->subMinutes(10)]);
     Commit::factory()->create();
 
     $response = $this->actingAs($user)
