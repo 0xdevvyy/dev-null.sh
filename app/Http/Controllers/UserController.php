@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Actions\DeleteUser;
 use App\Http\Requests\DeleteUserRequest;
 use App\Models\User;
-use App\Queries\CommitBuilder;
 use App\Queries\UserActivityQuery;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -19,11 +18,7 @@ final readonly class UserController
 {
     public function show(#[CurrentUser] User $currentUser, User $user, UserActivityQuery $activity): Response
     {
-        $user->loadCount([
-            'commits' => fn (CommitBuilder $query): CommitBuilder => $query->visibleTo($currentUser),
-            'followers',
-            'following',
-        ]);
+        $user->loadCounts($currentUser);
 
         return Inertia::render('user/show', [
             'user' => $user,
