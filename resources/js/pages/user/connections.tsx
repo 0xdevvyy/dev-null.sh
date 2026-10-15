@@ -1,13 +1,13 @@
-import { Head, InfiniteScroll, Link } from "@inertiajs/react";
-import { ArrowLeft } from "lucide-react";
-import type { CSSProperties } from "react";
-import { EmptyFeed } from "@/components/commit-feed";
-import { Spinner } from "@/components/ui/spinner";
-import { UserAvatar } from "@/components/user-avatar";
-import AppLayout from "@/layouts/app-layout";
-import { laneFor } from "@/lib/utils";
-import { show } from "@/routes/user";
-import type { CursorPaginated, User } from "@/types";
+import { Head, InfiniteScroll, Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
+import type { CSSProperties } from 'react';
+import { EmptyFeed } from '@/components/commit-feed';
+import { Spinner } from '@/components/ui/spinner';
+import { UserAvatar } from '@/components/user-avatar';
+import AppLayout from '@/layouts/app-layout';
+import { laneFor } from '@/lib/utils';
+import { show } from '@/routes/user';
+import type { CursorPaginated, User } from '@/types';
 
 export default function Connections({
     user,
@@ -15,10 +15,10 @@ export default function Connections({
     users,
 }: {
     user: User;
-    type: "following" | "followers";
+    type: 'following' | 'followers';
     users: CursorPaginated<User>;
 }) {
-    const title = type === "following" ? "Following" : "Followers";
+    const title = type === 'following' ? 'Following' : 'Followers';
 
     return (
         <>
@@ -41,7 +41,7 @@ export default function Connections({
             {users.data.length === 0 ? (
                 <div className="px-6 py-16 text-center sm:px-12">
                     <EmptyFeed command={`fatal: no ${type} yet`}>
-                        {type === "following"
+                        {type === 'following'
                             ? `@${user.username} isn't following anyone yet.`
                             : `Nobody is following @${user.username} yet.`}
                     </EmptyFeed>
@@ -69,7 +69,7 @@ export default function Connections({
                                         className="size-10 ring-2 ring-(--lane) ring-offset-2 ring-offset-card"
                                         style={
                                             {
-                                                "--lane": laneFor(person.id),
+                                                '--lane': laneFor(person.id),
                                             } as CSSProperties
                                         }
                                     />
