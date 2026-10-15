@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\CommitController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\UserController;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::middleware('guest')->group(function (): void {
-    Route::get('/', fn () => Inertia::render('welcome'))->name('home');
+    Route::get('/', [HomeController::class, 'show'])->name('home');
 
     // Session...
     Route::get('login', [SessionController::class, 'create'])
