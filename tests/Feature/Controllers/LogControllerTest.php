@@ -13,9 +13,9 @@ it('renders own commits and commits of followed users newest first', function ()
 
     $user->following()->attach($followed);
 
-    Commit::factory()->for($user)->create(['title' => 'Mine', 'created_at' => now()->subMinutes(2)]);
-    Commit::factory()->for($followed)->create(['title' => 'Followed', 'created_at' => now()->subMinute()]);
-    Commit::factory()->for($stranger)->create(['title' => 'Stranger']);
+    Commit::factory()->for($user)->create(['body' => 'Mine', 'created_at' => now()->subMinutes(2)]);
+    Commit::factory()->for($followed)->create(['body' => 'Followed', 'created_at' => now()->subMinute()]);
+    Commit::factory()->for($stranger)->create(['body' => 'Stranger']);
 
     $response = $this->actingAs($user)
         ->get('/log/following');
@@ -25,17 +25,17 @@ it('renders own commits and commits of followed users newest first', function ()
             ->component('log/show')
             ->where('log', 'following')
             ->has('commits.data', 2)
-            ->where('commits.data.0.title', 'Followed')
+            ->where('commits.data.0.body', 'Followed')
             ->where('commits.data.0.user.id', $followed->id)
             ->missing('commits.data.0.user.email')
-            ->where('commits.data.1.title', 'Mine'));
+            ->where('commits.data.1.body', 'Mine'));
 });
 
 it('renders commits of everyone newest first', function (): void {
     $user = User::factory()->create();
 
-    Commit::factory()->create(['title' => 'Older', 'created_at' => now()->subMinute()]);
-    Commit::factory()->create(['title' => 'Newer']);
+    Commit::factory()->create(['body' => 'Older', 'created_at' => now()->subMinute()]);
+    Commit::factory()->create(['body' => 'Newer']);
 
     $response = $this->actingAs($user)
         ->get('/log/everyone');
@@ -45,8 +45,8 @@ it('renders commits of everyone newest first', function (): void {
             ->component('log/show')
             ->where('log', 'everyone')
             ->has('commits.data', 2)
-            ->where('commits.data.0.title', 'Newer')
-            ->where('commits.data.1.title', 'Older'));
+            ->where('commits.data.0.body', 'Newer')
+            ->where('commits.data.1.body', 'Older'));
 });
 
 it('paginates the log', function (Log $log): void {
@@ -84,8 +84,8 @@ it('hides pending commits of others from the log', function (Log $log): void {
 
     $user->following()->attach($followed);
 
-    Commit::factory()->for($user)->pending()->create(['title' => 'Mine']);
-    Commit::factory()->for($followed)->pending()->create(['title' => 'Followed']);
+    Commit::factory()->for($user)->pending()->create(['body' => 'Mine']);
+    Commit::factory()->for($followed)->pending()->create(['body' => 'Followed']);
 
     $response = $this->actingAs($user)
         ->get(route('log.show', $log));
@@ -93,6 +93,6 @@ it('hides pending commits of others from the log', function (Log $log): void {
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('commits.data', 1)
-            ->where('commits.data.0.title', 'Mine')
+            ->where('commits.data.0.body', 'Mine')
             ->where('commits.data.0.status', 'pending'));
 })->with(Log::cases());

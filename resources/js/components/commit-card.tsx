@@ -147,16 +147,9 @@ export function CommitCard({
                                 rm {hash} → /dev/null
                             </p>
                         ) : (
-                            <>
-                                <p className="mt-0.5 text-[15px] leading-snug font-medium break-words">
-                                    {commit.title}
-                                </p>
-                                {commit.description && (
-                                    <p className="mt-1 text-[15px] leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
-                                        {commit.description}
-                                    </p>
-                                )}
-                            </>
+                            <p className="mt-0.5 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
+                                {commit.body}
+                            </p>
                         )}
 
                         {actions}

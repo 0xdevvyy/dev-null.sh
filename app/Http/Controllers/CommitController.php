@@ -19,11 +19,7 @@ final readonly class CommitController
 {
     public function store(CreateCommitRequest $request, #[CurrentUser] User $user, CreateCommit $action): RedirectResponse
     {
-        $commit = $action->handle(
-            $user,
-            $request->string('title')->value(),
-            $request->filled('description') ? $request->string('description')->value() : null,
-        );
+        $commit = $action->handle($user, $request->string('body')->value());
 
         if ($commit->status === CommitStatus::Pending) {
             Inertia::flash('toast', [

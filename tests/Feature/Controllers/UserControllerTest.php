@@ -12,8 +12,8 @@ it('renders a user profile', function (): void {
     $user->followers()->attach($viewer);
     $user->following()->attach(User::factory()->count(2)->create());
 
-    Commit::factory()->for($user)->create(['created_at' => now()->subDay(), 'title' => 'Older']);
-    Commit::factory()->for($user)->create(['title' => 'Newer']);
+    Commit::factory()->for($user)->create(['created_at' => now()->subDay(), 'body' => 'Older']);
+    Commit::factory()->for($user)->create(['body' => 'Newer']);
     Commit::factory()->create();
 
     $response = $this->actingAs($viewer)
@@ -31,9 +31,9 @@ it('renders a user profile', function (): void {
             ->missing('user.github_id')
             ->where('isFollowing', true)
             ->has('commits.data', 2)
-            ->where('commits.data.0.title', 'Newer')
+            ->where('commits.data.0.body', 'Newer')
             ->where('commits.data.0.user.username', 'octocat')
-            ->where('commits.data.1.title', 'Older'));
+            ->where('commits.data.1.body', 'Older'));
 });
 
 it('renders the user commit activity for the last year', function (): void {
@@ -103,7 +103,7 @@ it('may delete user account', function (): void {
 it('hides pending and rejected commits from other users', function (): void {
     $user = User::factory()->create(['username' => 'octocat']);
 
-    Commit::factory()->for($user)->create(['title' => 'Approved']);
+    Commit::factory()->for($user)->create(['body' => 'Approved']);
     Commit::factory()->for($user)->pending()->create();
     Commit::factory()->for($user)->rejected()->create();
 
@@ -115,7 +115,7 @@ it('hides pending and rejected commits from other users', function (): void {
             ->where('user.commits_count', 1)
             ->where('activity.368.count', 1)
             ->has('commits.data', 1)
-            ->where('commits.data.0.title', 'Approved'));
+            ->where('commits.data.0.body', 'Approved'));
 });
 
 it('shows own pending and rejected commits', function (): void {
