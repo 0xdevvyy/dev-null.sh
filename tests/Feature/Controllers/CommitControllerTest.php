@@ -6,6 +6,7 @@ use App\Enums\CommitStatus;
 use App\Enums\Log;
 use App\Models\Commit;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 it('may create a commit', function (): void {
     $user = User::factory()->create();
@@ -34,6 +35,24 @@ it('flashes the created commit', function (): void {
         'id' => $commit->id,
         'body' => 'Initial commit',
     ]);
+});
+
+it('does not count the authenticated user relations when redirecting after a commit', function (): void {
+    $user = User::factory()->create();
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($user)
+        ->fromRoute('log.show', Log::Following)
+        ->post(route('commit.store'), [
+            'body' => 'Initial commit',
+        ]);
+
+    $response->assertRedirectToRoute('log.show', Log::Following);
+
+    expect(array_column(DB::getQueryLog(), 'query'))
+        ->not->toBeEmpty()
+        ->each->not->toContain('count(*)');
 });
 
 it('requires a body', function (): void {
