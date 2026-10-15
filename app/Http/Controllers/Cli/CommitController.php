@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Cli;
 
 use App\Actions\CreateCommit;
 use App\Enums\CommitStatus;
@@ -11,7 +11,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Response;
 
-final readonly class CliCommitController
+final readonly class CommitController
 {
     public function store(CreateCommitRequest $request, #[CurrentUser] User $user, CreateCommit $action): Response
     {

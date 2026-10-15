@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Cli;
 
 use App\Dto\SshPublicKey;
 use App\Models\SshKey;
@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
-final readonly class CliKeyLookupController
+final readonly class KeyLookupController
 {
     private const int MaxKeys = 20;
 

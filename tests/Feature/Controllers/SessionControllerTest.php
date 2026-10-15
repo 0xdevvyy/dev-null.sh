@@ -3,14 +3,16 @@
 declare(strict_types=1);
 
 use App\Enums\Log;
+use App\Jobs\SyncGitHubSshKeysJob;
 use App\Models\User;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Exceptions;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as GitHubUser;
-use Tests\Support\SshKeyPair;
+
+beforeEach(function (): void {
+    Queue::fake();
+});
 
 it('redirects to github', function (): void {
     Socialite::fake('github');
@@ -21,8 +23,6 @@ it('redirects to github', function (): void {
 });
 
 it('creates a user and logs them in', function (): void {
-    Http::fake(['api.github.com/*' => Http::response(status: 404)]);
-
     Socialite::fake('github', GitHubUser::fake([
         'id' => '583231',
         'nickname' => 'octocat',
@@ -55,8 +55,6 @@ it('creates a user and logs them in', function (): void {
 });
 
 it('updates an existing user on login', function (): void {
-    Http::fake(['api.github.com/*' => Http::response(status: 404)]);
-
     $user = User::factory()->create([
         'github_id' => '583231',
         'username' => 'old-username',
@@ -77,51 +75,20 @@ it('updates an existing user on login', function (): void {
     $this->assertAuthenticatedAs($user);
 });
 
-it('syncs the ssh keys of the user on login', function (): void {
-    $publicKey = SshKeyPair::generate()->publicKey;
-
-    Http::fake([
-        'api.github.com/user/583231' => Http::response(['login' => 'octocat']),
-        'api.github.com/users/octocat/keys*' => Http::response([['id' => 1, 'key' => $publicKey->toOpenSsh()]]),
-        'api.github.com/users/octocat/ssh_signing_keys*' => Http::response([]),
-    ]);
-
+it('queues a sync of the ssh keys of the user on login', function (): void {
     Socialite::fake('github', GitHubUser::fake([
         'id' => '583231',
         'nickname' => 'octocat',
     ]));
 
-    $this->withoutDefer()->get(route('login.store'));
+    $this->get(route('login.store'));
 
     $user = User::query()->where('github_id', '583231')->sole();
 
-    expect($user->sshKeys()->sole()->fingerprint)->toBe($publicKey->fingerprint());
-});
-
-it('logs in even when the ssh keys cannot be synced', function (): void {
-    Exceptions::fake();
-
-    Http::fake([
-        'api.github.com/*' => Http::response(['message' => 'Server Error'], 500),
-    ]);
-
-    Socialite::fake('github', GitHubUser::fake([
-        'id' => '583231',
-        'nickname' => 'octocat',
-    ]));
-
-    $response = $this->withoutDefer()->get(route('login.store'));
-
-    $response->assertRedirectToRoute('log.show', Log::Following);
-
-    $this->assertAuthenticated();
-
-    Exceptions::assertReported(RequestException::class);
+    Queue::assertPushed(SyncGitHubSshKeysJob::class, fn (SyncGitHubSshKeysJob $job): bool => $job->user->is($user));
 });
 
 it('redirects to the intended url after login', function (): void {
-    Http::fake(['api.github.com/*' => Http::response(status: 404)]);
-
     $user = User::factory()->create();
 
     Socialite::fake('github', GitHubUser::fake([

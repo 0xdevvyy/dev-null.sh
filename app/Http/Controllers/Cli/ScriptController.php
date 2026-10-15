@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Cli;
 
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
-final readonly class CliScriptController
+final readonly class ScriptController
 {
     /**
      * The `devnull commit` script: curl -fsSL https://devnull.laravel.cloud/commit | bash -s -- 'It was DNS.'

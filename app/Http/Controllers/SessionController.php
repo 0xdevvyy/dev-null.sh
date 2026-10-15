@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\SyncGitHubSshKeys;
 use App\Actions\SyncGitHubUser;
 use App\Enums\Log;
+use App\Jobs\SyncGitHubSshKeysJob;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +23,7 @@ final readonly class SessionController
         return Socialite::driver('github')->redirect();
     }
 
-    public function store(Request $request, SyncGitHubUser $action, SyncGitHubSshKeys $syncGitHubSshKeys): RedirectResponse
+    public function store(Request $request, SyncGitHubUser $action): RedirectResponse
     {
         if ($request->has('error')) {
             return $this->failed();
@@ -39,7 +39,7 @@ final readonly class SessionController
 
         $user = $action->handle($githubUser);
 
-        defer(fn () => rescue(fn () => $syncGitHubSshKeys->handle($user)));
+        dispatch(new SyncGitHubSshKeysJob($user));
 
         Auth::login($user, remember: true);
 
