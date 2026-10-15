@@ -35,9 +35,11 @@ type Thread = {
     onReplied: () => void;
 };
 
-function useThread(commit: Commit): Thread {
-    const [replies, setReplies] = useState<Commit[] | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
+function useThread(commit: Commit, initialReplies?: Commit[]): Thread {
+    const [replies, setReplies] = useState<Commit[] | null>(
+        initialReplies ?? null,
+    );
+    const [isOpen, setIsOpen] = useState(initialReplies !== undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
 
@@ -81,8 +83,14 @@ function useThread(commit: Commit): Thread {
     };
 }
 
-export function CommitThread({ commit }: { commit: Commit }) {
-    const thread = useThread(commit);
+export function CommitThread({
+    commit,
+    initialReplies,
+}: {
+    commit: Commit;
+    initialReplies?: Commit[];
+}) {
+    const thread = useThread(commit, initialReplies);
 
     return (
         <>
@@ -238,13 +246,22 @@ function ReplyItem({
                         <span aria-hidden className="text-muted-foreground">
                             ·
                         </span>
-                        <time
-                            dateTime={reply.created_at}
-                            title={new Date(reply.created_at).toLocaleString()}
-                            className="shrink-0 font-mono text-xs text-muted-foreground"
+                        <Link
+                            href={CommitController.show({
+                                user: reply.user,
+                                commit: reply,
+                            })}
+                            className="shrink-0 font-mono text-xs text-muted-foreground hover:underline"
                         >
-                            {formatRelativeTime(reply.created_at, now)}
-                        </time>
+                            <time
+                                dateTime={reply.created_at}
+                                title={new Date(
+                                    reply.created_at,
+                                ).toLocaleString()}
+                            >
+                                {formatRelativeTime(reply.created_at, now)}
+                            </time>
+                        </Link>
                         {reply.status !== 'approved' && (
                             <span
                                 className={cn(

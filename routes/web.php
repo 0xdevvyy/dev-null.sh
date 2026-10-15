@@ -73,6 +73,9 @@ Route::middleware('auth')->group(function (): void {
     // User...
     Route::delete('user', [UserController::class, 'destroy'])->name('user.destroy');
     Route::get('@{user:username}', [UserController::class, 'show'])->name('user.show');
+    Route::get('@{user:username}/commits/{commit}', [CommitController::class, 'show'])
+        ->scopeBindings()
+        ->name('commit.show');
     Route::get('@{user:username}/preview', [UserPreviewController::class, 'show'])->name('user-preview.show');
 
     Route::get('@{user:username}/following', [UserFollowingController::class, 'index'])
