@@ -140,25 +140,35 @@ export function CommitCard({
                                 </span>
                             )}
 
-                            <span
-                                className="ml-auto hidden shrink-0 font-mono text-[13px] text-muted-foreground sm:inline"
-                                title={`Commit ${commit.id}`}
-                            >
-                                {hash}
-                            </span>
-
-                            {isOwn && (
-                                <button
-                                    type="button"
-                                    onClick={() => setDeletion('confirming')}
-                                    aria-label="Delete commit"
-                                    title="Delete commit"
-                                    className="-my-1 ml-auto shrink-0 self-center rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 sm:ml-1 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 [@media(hover:none)]:opacity-100"
-                                    data-test="delete-commit-button"
+                            <span className="relative ml-auto flex shrink-0 items-center self-center">
+                                <span
+                                    className={cn(
+                                        'hidden font-mono text-[13px] text-muted-foreground transition-opacity sm:inline',
+                                        {
+                                            'group-focus-within:opacity-0 group-hover:opacity-0 [@media(hover:none)]:opacity-0':
+                                                isOwn,
+                                        },
+                                    )}
+                                    title={`Commit ${commit.id}`}
                                 >
-                                    <Trash2 className="size-4" />
-                                </button>
-                            )}
+                                    {hash}
+                                </span>
+
+                                {isOwn && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setDeletion('confirming')
+                                        }
+                                        aria-label="Delete commit"
+                                        title="Delete commit"
+                                        className="-my-1 rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 sm:absolute sm:top-1/2 sm:-right-1.5 sm:my-0 sm:-translate-y-1/2 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                                        data-test="delete-commit-button"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                )}
+                            </span>
                         </div>
 
                         {deletion === 'deleting' ? (
