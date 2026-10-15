@@ -7,6 +7,7 @@ import {
     MapPin,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { useState } from 'react';
 import UserFollowController from '@/actions/App/Http/Controllers/UserFollowController';
 import { ActivityGraph } from '@/components/activity-graph';
 import { CommitFeed, EmptyFeed } from '@/components/commit-feed';
@@ -35,6 +36,7 @@ export default function Show({
     const { auth } = usePage().props;
     const isCurrentUser = auth.user.id === user.id;
     const lane = laneFor(user.id);
+    const [highlightedDate, setHighlightedDate] = useState<string | null>(null);
 
     return (
         <>
@@ -206,10 +208,15 @@ export default function Show({
                 </dl>
             </header>
 
-            <ActivityGraph activity={activity} lane={lane} />
+            <ActivityGraph
+                activity={activity}
+                lane={lane}
+                onDayHover={setHighlightedDate}
+            />
 
             <CommitFeed
                 commits={commits}
+                highlightedDate={highlightedDate}
                 end={
                     isCurrentUser
                         ? 'That was your first commit. Everyone starts somewhere.'

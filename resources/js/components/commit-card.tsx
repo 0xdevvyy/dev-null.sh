@@ -5,6 +5,7 @@ import CommitController from '@/actions/App/Http/Controllers/CommitController';
 import { GraphRail } from '@/components/graph-rail';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
+import { useNow } from '@/hooks/use-now';
 import {
     cn,
     formatRelativeTime,
@@ -18,11 +19,20 @@ import type { Commit } from '@/types';
 export function CommitCard({
     commit,
     previousLane,
+    isDimmed = false,
+    isPreviousDimmed = false,
+    isDayHighlighted = false,
+    onAuthorHover,
 }: {
     commit: Commit;
     previousLane?: string;
+    isDimmed?: boolean;
+    isPreviousDimmed?: boolean;
+    isDayHighlighted?: boolean;
+    onAuthorHover?: (isHovering: boolean) => void;
 }) {
     const { auth } = usePage().props;
+    const now = useNow();
     const [deletion, setDeletion] = useState<
         'idle' | 'confirming' | 'deleting'
     >('idle');
@@ -50,11 +60,14 @@ export function CommitCard({
     return (
         <article
             className={cn(
-                'group grid transition-[grid-template-rows,opacity] duration-300 ease-out',
+                'group grid scroll-mt-28 transition-[grid-template-rows,opacity,background-color] duration-300 ease-out outline-none focus-visible:bg-accent',
+                { 'bg-primary-soft/60': isDayHighlighted },
                 deletion === 'deleting'
                     ? 'grid-rows-[0fr] opacity-0 delay-400'
                     : 'grid-rows-[1fr]',
             )}
+            tabIndex={-1}
+            data-commit
             data-test="commit"
         >
             <div className="flex min-h-0 overflow-hidden">
@@ -62,12 +75,21 @@ export function CommitCard({
                     lane={laneFor(commit.user_id)}
                     previousLane={previousLane}
                     isFresh={isOwn && isWithinSeconds(commit.created_at, 15)}
+                    isDimmed={isDimmed}
+                    isPreviousDimmed={isPreviousDimmed}
+                    onHoverChange={onAuthorHover}
                 />
 
                 <div className="flex min-w-0 flex-1 gap-3 border-b py-3 pr-4">
                     <Link
                         href={show(commit.user)}
                         className="shrink-0 rounded-full"
+                        onMouseEnter={
+                            onAuthorHover && (() => onAuthorHover(true))
+                        }
+                        onMouseLeave={
+                            onAuthorHover && (() => onAuthorHover(false))
+                        }
                     >
                         <UserAvatar user={commit.user} className="size-10" />
                     </Link>
@@ -93,7 +115,7 @@ export function CommitCard({
                                 ).toLocaleString()}
                                 className="shrink-0 font-mono text-[13px] text-muted-foreground"
                             >
-                                {formatRelativeTime(commit.created_at)}
+                                {formatRelativeTime(commit.created_at, now)}
                             </time>
 
                             <span

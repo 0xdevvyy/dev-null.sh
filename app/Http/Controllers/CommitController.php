@@ -12,16 +12,22 @@ use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 
 final readonly class CommitController
 {
     public function store(CreateCommitRequest $request, #[CurrentUser] User $user, CreateCommit $action): RedirectResponse
     {
-        $action->handle(
+        $commit = $action->handle(
             $user,
             $request->string('title')->value(),
             $request->filled('description') ? $request->string('description')->value() : null,
         );
+
+        Inertia::flash('committed', [
+            'id' => $commit->id,
+            'title' => $commit->title,
+        ]);
 
         return back();
     }
