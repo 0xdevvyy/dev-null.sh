@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\CommitApprovalController;
 use App\Http\Controllers\CommitController;
 use App\Http\Controllers\CommitRejectionController;
+use App\Http\Controllers\CommitReplyController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\ModerationController;
@@ -43,6 +44,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('commit.store');
     Route::delete('commits/{commit}', [CommitController::class, 'destroy'])
         ->name('commit.destroy');
+    Route::get('commits/{commit}/replies', [CommitReplyController::class, 'index'])
+        ->name('commit-reply.index');
 
     // Moderation...
     Route::middleware('can:moderate')->group(function (): void {

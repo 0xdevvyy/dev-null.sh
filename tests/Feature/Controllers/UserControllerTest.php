@@ -177,3 +177,18 @@ it('requires authentication to list follows', function (): void {
     $this->get(route('user-following.index', $user))->assertRedirectToRoute('home');
     $this->get(route('user-followers.index', $user))->assertRedirectToRoute('home');
 });
+
+it('only shows top-level commits on profiles', function (): void {
+    $user = User::factory()->create(['username' => 'octocat']);
+    $parent = Commit::factory()->for($user)->create(['body' => 'Root']);
+    Commit::factory()->for($user)->for($parent, 'parent')->create();
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/@octocat');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('commits.data', 1)
+            ->where('commits.data.0.body', 'Root')
+            ->where('commits.data.0.replies_count', 1));
+});

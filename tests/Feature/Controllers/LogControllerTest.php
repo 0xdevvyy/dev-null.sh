@@ -176,3 +176,19 @@ it('only suggests approved commits', function (): void {
             ->has('suggestions', 1)
             ->where('suggestions.0.body', 'Approved'));
 });
+
+it('only shows top-level commits with their reply counts', function (): void {
+    $user = User::factory()->create();
+    $parent = Commit::factory()->create(['body' => 'Root']);
+    Commit::factory()->for($parent, 'parent')->count(2)->create();
+    Commit::factory()->for($parent, 'parent')->pending()->create();
+
+    $response = $this->actingAs($user)
+        ->get('/log/everyone');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('commits.data', 1)
+            ->where('commits.data.0.body', 'Root')
+            ->where('commits.data.0.replies_count', 2));
+});

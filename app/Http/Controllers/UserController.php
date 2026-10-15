@@ -31,6 +31,8 @@ final readonly class UserController
             'activity' => $activity->get($user, $currentUser),
             'commits' => Inertia::scroll(fn () => $user->commits()
                 ->visibleTo($currentUser)
+                ->topLevel()
+                ->withVisibleReplyCount($currentUser)
                 ->with('user')
                 ->latest()
                 ->latest('id')
