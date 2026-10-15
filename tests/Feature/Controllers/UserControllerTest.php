@@ -34,6 +34,8 @@ it('renders a user profile', function (): void {
             ->has('commits.data', 2)
             ->where('commits.data.0.body', 'Newer')
             ->where('commits.data.0.user.username', 'octocat')
+            ->where('commits.data.0.stars_count', 0)
+            ->where('commits.data.0.starred', false)
             ->where('commits.data.1.body', 'Older'));
 });
 
@@ -55,9 +57,14 @@ it('does not count the user relations or activity when reloading only commits', 
                 ->missing('activity'));
         });
 
-    expect(array_column(DB::getQueryLog(), 'query'))
-        ->not->toBeEmpty()
-        ->each(fn ($query) => $query->not->toContain('count(*)')->not->toContain('exists'));
+    $queries = array_column(DB::getQueryLog(), 'query');
+
+    expect($queries)->not->toBeEmpty()
+        ->and(collect($queries)->filter(
+            fn (string $query): bool => str_contains($query, 'from "follows"')
+                || str_contains($query, 'group by')
+                || str_starts_with($query, 'select count(*)'),
+        ))->toBeEmpty();
 });
 
 it('renders the user commit activity for the last year', function (): void {
@@ -177,7 +184,7 @@ it('lists who a user is following', function (): void {
             ->where('users.data.0.id', $followed->id));
 });
 
-it('lists a user\'s followers', function (): void {
+it("lists a user's followers", function (): void {
     $user = User::factory()->create(['username' => 'octocat']);
     $follower = User::factory()->create();
     $user->followers()->attach($follower);

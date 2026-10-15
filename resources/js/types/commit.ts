@@ -9,6 +9,8 @@ export type Commit = {
     status: CommitStatus;
     created_at: string;
     updated_at: string;
+    stars_count: number;
+    starred: boolean;
     user: User;
 };
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\ApproveCommitsController;
 use App\Http\Controllers\CommitApprovalController;
 use App\Http\Controllers\CommitController;
 use App\Http\Controllers\CommitRejectionController;
+use App\Http\Controllers\CommitStarController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\ModerationController;
@@ -44,6 +45,10 @@ Route::middleware('auth')->group(function (): void {
         ->name('commit.store');
     Route::delete('commits/{commit}', [CommitController::class, 'destroy'])
         ->name('commit.destroy');
+    Route::post('commits/{commit}/star', [CommitStarController::class, 'store'])
+        ->name('commit-star.store');
+    Route::delete('commits/{commit}/star', [CommitStarController::class, 'destroy'])
+        ->name('commit-star.destroy');
 
     // Moderation...
     Route::middleware('can:moderate')->group(function (): void {

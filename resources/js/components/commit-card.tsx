@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import CommitController from '@/actions/App/Http/Controllers/CommitController';
+import { CommitStarButton } from '@/components/commit-star-button';
 import { GraphRail } from '@/components/graph-rail';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
@@ -196,6 +197,13 @@ export function CommitCard({
                             <p className="mt-0.5 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
                                 {commit.body}
                             </p>
+                        )}
+
+                        {deletion !== 'deleting' && (
+                            <CommitStarButton
+                                key={`${commit.starred}-${commit.stars_count}`}
+                                commit={commit}
+                            />
                         )}
 
                         {actions}

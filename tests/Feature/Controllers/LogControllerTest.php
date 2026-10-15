@@ -29,6 +29,8 @@ it('renders own commits and commits of followed users newest first', function ()
             ->has('commits.data', 2)
             ->where('commits.data.0.body', 'Followed')
             ->where('commits.data.0.user.id', $followed->id)
+            ->where('commits.data.0.stars_count', 0)
+            ->where('commits.data.0.starred', false)
             ->missing('commits.data.0.user.email')
             ->where('commits.data.1.body', 'Mine'));
 });
@@ -82,9 +84,13 @@ it('does not count the authenticated user relations when reloading only commits'
             $page->reloadOnly('commits', fn ($reload) => $reload->missing('auth'));
         });
 
-    expect(array_column(DB::getQueryLog(), 'query'))
-        ->not->toBeEmpty()
-        ->each->not->toContain('count(*)');
+    $queries = array_column(DB::getQueryLog(), 'query');
+
+    expect($queries)->not->toBeEmpty()
+        ->and(collect($queries)->filter(
+            fn (string $query): bool => str_contains($query, 'from "follows"')
+                || str_starts_with($query, 'select count(*)'),
+        ))->toBeEmpty();
 });
 
 it('returns not found for unknown logs', function (): void {

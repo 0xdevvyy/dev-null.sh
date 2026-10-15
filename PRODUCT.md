@@ -30,7 +30,8 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 
 - Commits (posts): plain text, 3–280 characters; create and delete only (no editing). Rate limited to 10 commits per minute per user.
 - Follow/unfollow, idempotent; self-follow rejected.
-- Deliberately excluded for now: comments, likes/reactions, reposts, images/media, mentions, hashtags, search, notifications, DMs, other OAuth providers, public API, moderation tools, blocking/muting, header/banner images. Future work must not design for these as if they exist.
+- Stars: anyone who can see a commit can star and unstar it. Starring is idempotent. The count sits on the commit. A star is the engagement action, named the way GitHub names it, and it is not a git ref.
+- Deliberately excluded for now: comments, reposts, images/media, mentions, hashtags, search, notifications, DMs, other OAuth providers, public API, blocking/muting, header/banner images. Future work must not design for these as if they exist.
 - Open: handling GitHub username renames that collide with a stale username.
 
 ## Brand Commitments
@@ -38,7 +39,7 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 - Name: **devnull** (lowercase), a nod to `/dev/null`.
 - Voice: dry, terminal-literate humor. Understated wit; copy may wink at Unix and `/dev/null`, but stays clear and never obscures what an action does.
 - Current tagline in use: "A social network for developers."
-- Vocabulary: a post is a **commit** and a timeline is a **log**, in the UI and in code (`Commit` model, `LogController`, `/log/{log}`). The git metaphor stops at those two nouns: no branches, forks, stars, pushes, diffs, or PRs.
+- Vocabulary: a post is a **commit** and a timeline is a **log**, in the UI and in code (`Commit` model, `LogController`, `/log/{log}`). The git metaphor stops at those two nouns: no branches, forks, pushes, diffs, or PRs. **Star** is the engagement verb, not a git ref.
 
 ## Evidence on Hand
 
@@ -48,6 +49,6 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 ## Product Principles
 
 1. **GitHub is the source of truth for identity.** Never add devnull-side profile editing or alternate sign-in.
-2. **Keep it stupidly simple.** Text posts, follows, timelines. Every addition must justify itself against the "not now" list.
+2. **Keep it stupidly simple.** Text posts, follows, stars, timelines. Every addition must justify itself against the "not now" list.
 3. **Words over mechanics.** The post body is the content; chrome and metadata stay subordinate to it.
 4. **Wit in the copy, clarity in the action.** Humor lives in tone, never in labels a user needs to understand.

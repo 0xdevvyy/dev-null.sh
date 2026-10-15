@@ -25,6 +25,7 @@ final readonly class UserController
             'commits' => Inertia::scroll(fn () => $user->commits()
                 ->visibleTo($currentUser)
                 ->with('user')
+                ->withStarsFor($currentUser)
                 ->latest()
                 ->latest('id')
                 ->cursorPaginate(20)),

@@ -23,6 +23,7 @@ final readonly class FollowingLogQuery implements LogQuery
                 ->orWhere('user_id', $user->id))
             ->visibleTo($user)
             ->with('user')
+            ->withStarsFor($user)
             ->latest()
             ->latest('id');
     }
