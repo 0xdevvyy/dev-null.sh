@@ -2,124 +2,110 @@
 
 declare(strict_types=1);
 
+use App\Enums\Timeline;
 use App\Models\User;
-use Illuminate\Auth\Events\Lockout;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Hash;
+use Laravel\Socialite\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
+use Laravel\Socialite\Two\User as GitHubUser;
 
-it('renders login page', function (): void {
-    $response = $this->fromRoute('home')
-        ->get(route('login'));
+it('redirects to github', function (): void {
+    Socialite::fake('github');
 
-    $response->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('session/create')
-            ->where('canResetPassword', true)
-            ->where('canRegister', true)
-            ->has('status'));
+    $response = $this->get(route('login'));
+
+    $response->assertRedirect();
 });
 
-it('may create a session', function (): void {
-    $user = User::factory()->withoutTwoFactor()->create([
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
-    ]);
+it('creates a user and logs them in', function (): void {
+    Socialite::fake('github', GitHubUser::fake([
+        'id' => '583231',
+        'nickname' => 'octocat',
+        'name' => 'The Octocat',
+        'email' => 'octocat@github.com',
+        'avatar' => 'https://avatars.githubusercontent.com/u/583231',
+        'bio' => 'I am the Octocat.',
+        'location' => 'San Francisco',
+        'blog' => 'https://github.blog',
+        'company' => '@github',
+    ]));
 
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'email' => 'test@example.com',
-            'password' => 'password',
-        ]);
+    $response = $this->get(route('login.store'));
 
-    $response->assertRedirectToRoute('dashboard');
+    $response->assertRedirectToRoute('timeline.show', Timeline::Following);
+
+    $user = User::query()->where('github_id', '583231')->sole();
+
+    expect($user)
+        ->username->toBe('octocat')
+        ->name->toBe('The Octocat')
+        ->email->toBe('octocat@github.com')
+        ->avatar_url->toBe('https://avatars.githubusercontent.com/u/583231')
+        ->bio->toBe('I am the Octocat.')
+        ->location->toBe('San Francisco')
+        ->website->toBe('https://github.blog')
+        ->company->toBe('@github');
 
     $this->assertAuthenticatedAs($user);
 });
 
-it('may create a session with remember me', function (): void {
-    $user = User::factory()->withoutTwoFactor()->create([
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
-    ]);
-
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'remember' => true,
-        ]);
-
-    $response->assertRedirectToRoute('dashboard');
-
-    $this->assertAuthenticatedAs($user);
-});
-
-it('redirects to two-factor challenge when enabled', function (): void {
+it('updates an existing user on login', function (): void {
     $user = User::factory()->create([
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
-        'two_factor_secret' => encrypt('secret'),
-        'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
-        'two_factor_confirmed_at' => now(),
+        'github_id' => '583231',
+        'username' => 'old-username',
     ]);
 
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'email' => 'test@example.com',
-            'password' => 'password',
-        ]);
+    Socialite::fake('github', GitHubUser::fake([
+        'id' => '583231',
+        'nickname' => 'octocat',
+    ]));
 
-    $response->assertRedirectToRoute('two-factor.login');
+    $response = $this->get(route('login.store'));
 
-    $this->assertGuest();
+    $response->assertRedirectToRoute('timeline.show', Timeline::Following);
+
+    expect(User::query()->count())->toBeOne()
+        ->and($user->refresh()->username)->toBe('octocat');
+
+    $this->assertAuthenticatedAs($user);
 });
 
-it('fails with invalid credentials', function (): void {
-    User::factory()->create([
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
-    ]);
-
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'email' => 'test@example.com',
-            'password' => 'wrong-password',
-        ]);
-
-    $response->assertRedirectToRoute('login')
-        ->assertSessionHasErrors('email');
-
-    $this->assertGuest();
-});
-
-it('requires email', function (): void {
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'password' => 'password',
-        ]);
-
-    $response->assertRedirectToRoute('login')
-        ->assertSessionHasErrors('email');
-});
-
-it('requires password', function (): void {
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'email' => 'test@example.com',
-        ]);
-
-    $response->assertRedirectToRoute('login')
-        ->assertSessionHasErrors('password');
-});
-
-it('may destroy a session', function (): void {
+it('redirects to the intended url after login', function (): void {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)
-        ->fromRoute('dashboard')
-        ->post(route('logout'));
+    Socialite::fake('github', GitHubUser::fake([
+        'id' => '583231',
+    ]));
 
-    $response->assertRedirect('/');
+    $this->get(route('user.show', $user))
+        ->assertRedirectToRoute('home');
+
+    $response = $this->get(route('login.store'));
+
+    $response->assertRedirectToRoute('user.show', $user);
+});
+
+it('fails when the user denies access', function (): void {
+    $response = $this->get(route('login.store', ['error' => 'access_denied']));
+
+    $response->assertRedirectToRoute('home')
+        ->assertInertiaFlash('toast', [
+            'type' => 'error',
+            'message' => __('Unable to sign in with GitHub. Please try again.'),
+        ]);
+
+    $this->assertGuest();
+});
+
+it('fails when the state is invalid', function (): void {
+    Socialite::shouldReceive('driver->user')->andThrow(new InvalidStateException);
+
+    $response = $this->get(route('login.store'));
+
+    $response->assertRedirectToRoute('home')
+        ->assertInertiaFlash('toast', [
+            'type' => 'error',
+            'message' => __('Unable to sign in with GitHub. Please try again.'),
+        ]);
 
     $this->assertGuest();
 });
@@ -128,84 +114,19 @@ it('redirects authenticated users away from login', function (): void {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
-        ->fromRoute('dashboard')
         ->get(route('login'));
 
-    $response->assertRedirectToRoute('dashboard');
+    $response->assertRedirectToRoute('timeline.show', Timeline::Following);
 });
 
-it('throttles login attempts after too many failures', function (): void {
-    $user = User::factory()->create([
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
-    ]);
+it('may destroy a session', function (): void {
+    $user = User::factory()->create();
 
-    // Make 5 failed login attempts to trigger rate limiting
-    for ($i = 0; $i < 5; $i++) {
-        $this->fromRoute('login')
-            ->post(route('login.store'), [
-                'email' => 'test@example.com',
-                'password' => 'wrong-password',
-            ]);
-    }
+    $response = $this->actingAs($user)
+        ->fromRoute('timeline.show', Timeline::Following)
+        ->post(route('logout'));
 
-    // The 6th attempt should be throttled
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'email' => 'test@example.com',
-            'password' => 'wrong-password',
-        ]);
+    $response->assertRedirectToRoute('home');
 
-    $response->assertRedirectToRoute('login')
-        ->assertSessionHasErrors('email');
-
-    $errors = session('errors');
-    expect($errors->get('email')[0])->toContain('Too many login attempts');
-});
-
-it('clears rate limit after successful login', function (): void {
-    $user = User::factory()->withoutTwoFactor()->create([
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
-    ]);
-
-    // Make a few failed attempts
-    for ($i = 0; $i < 3; $i++) {
-        $this->fromRoute('login')
-            ->post(route('login.store'), [
-                'email' => 'test@example.com',
-                'password' => 'wrong-password',
-            ]);
-    }
-
-    // Successful login should clear the rate limit
-    $response = $this->fromRoute('login')
-        ->post(route('login.store'), [
-            'email' => 'test@example.com',
-            'password' => 'password',
-        ]);
-
-    $response->assertRedirectToRoute('dashboard');
-    $this->assertAuthenticatedAs($user);
-});
-
-it('dispatches lockout event when rate limit is reached', function (): void {
-    Event::fake([Lockout::class]);
-
-    $user = User::factory()->create([
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
-    ]);
-
-    // Make 6 failed login attempts to trigger rate limiting and Lockout event
-    // The Lockout event fires on the 6th attempt when tooManyAttempts returns true
-    for ($i = 0; $i < 6; $i++) {
-        $this->fromRoute('login')
-            ->post(route('login.store'), [
-                'email' => 'test@example.com',
-                'password' => 'wrong-password',
-            ]);
-    }
-
-    Event::assertDispatched(Lockout::class);
+    $this->assertGuest();
 });

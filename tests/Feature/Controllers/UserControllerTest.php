@@ -2,205 +2,79 @@
 
 declare(strict_types=1);
 
+use App\Models\Post;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 
-it('renders registration page', function (): void {
-    $response = $this->fromRoute('home')
-        ->get(route('register'));
+it('renders a user profile', function (): void {
+    $user = User::factory()->create(['username' => 'octocat']);
+    $viewer = User::factory()->create();
+
+    $user->followers()->attach($viewer);
+    $user->following()->attach(User::factory()->count(2)->create());
+
+    Post::factory()->for($user)->create(['created_at' => now()->subDay(), 'body' => 'Older']);
+    Post::factory()->for($user)->create(['body' => 'Newer']);
+    Post::factory()->create();
+
+    $response = $this->actingAs($viewer)
+        ->get('/@octocat');
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('user/create')
-            ->where('passwordRules', Password::defaults()->toPasswordRulesString()));
+            ->component('user/show')
+            ->where('user.id', $user->id)
+            ->where('user.username', 'octocat')
+            ->where('user.posts_count', 2)
+            ->where('user.followers_count', 1)
+            ->where('user.following_count', 2)
+            ->missing('user.email')
+            ->missing('user.github_id')
+            ->where('isFollowing', true)
+            ->has('posts.data', 2)
+            ->where('posts.data.0.body', 'Newer')
+            ->where('posts.data.0.user.username', 'octocat')
+            ->where('posts.data.1.body', 'Older'));
 });
 
-it('may register a new user', function (): void {
-    Event::fake([Registered::class]);
+it('renders whether the viewer is not following the user', function (): void {
+    $user = User::factory()->create();
 
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password1234',
-            'password_confirmation' => 'password1234',
-        ]);
+    $response = $this->actingAs(User::factory()->create())
+        ->get(route('user.show', $user));
 
-    $response->assertRedirectToRoute('dashboard');
-
-    $user = User::query()->where('email', 'test@example.com')->first();
-
-    expect($user)->not->toBeNull()
-        ->and($user->name)->toBe('Test User')
-        ->and($user->email)->toBe('test@example.com')
-        ->and(Hash::check('password1234', $user->password))->toBeTrue();
-
-    $this->assertAuthenticatedAs($user);
-
-    Event::assertDispatched(Registered::class);
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('isFollowing', false)
+            ->has('posts.data', 0));
 });
 
-it('requires name', function (): void {
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
+it('returns not found for unknown usernames', function (): void {
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/@missing');
 
-    $response->assertRedirectToRoute('register')
-        ->assertSessionHasErrors('name');
+    $response->assertNotFound();
 });
 
-it('requires email', function (): void {
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'name' => 'Test User',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
+it('requires authentication to view a profile', function (): void {
+    $user = User::factory()->create();
 
-    $response->assertRedirectToRoute('register')
-        ->assertSessionHasErrors('email');
-});
+    $response = $this->get(route('user.show', $user));
 
-it('requires valid email', function (): void {
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'not-an-email',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-    $response->assertRedirectToRoute('register')
-        ->assertSessionHasErrors('email');
-});
-
-it('requires unique email', function (): void {
-    User::factory()->create(['email' => 'test@example.com']);
-
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-    $response->assertRedirectToRoute('register')
-        ->assertSessionHasErrors('email');
-});
-
-it('requires password', function (): void {
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-    $response->assertRedirectToRoute('register')
-        ->assertSessionHasErrors('password');
-});
-
-it('requires password confirmation', function (): void {
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-        ]);
-
-    $response->assertRedirectToRoute('register')
-        ->assertSessionHasErrors('password');
-});
-
-it('requires matching password confirmation', function (): void {
-    $response = $this->fromRoute('register')
-        ->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'different-password',
-        ]);
-
-    $response->assertRedirectToRoute('register')
-        ->assertSessionHasErrors('password');
+    $response->assertRedirectToRoute('home');
 });
 
 it('may delete user account', function (): void {
-    $user = User::factory()->create([
-        'password' => Hash::make('password'),
-    ]);
+    $user = User::factory()->create();
+    Post::factory()->for($user)->create();
 
     $response = $this->actingAs($user)
         ->fromRoute('user-profile.edit')
-        ->delete(route('user.destroy'), [
-            'password' => 'password',
-        ]);
+        ->delete(route('user.destroy'));
 
     $response->assertRedirectToRoute('home');
 
-    expect($user->fresh())->toBeNull();
+    expect($user->fresh())->toBeNull()
+        ->and(Post::query()->count())->toBe(0);
 
     $this->assertGuest();
-});
-
-it('requires password to delete account', function (): void {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)
-        ->fromRoute('user-profile.edit')
-        ->delete(route('user.destroy'), []);
-
-    $response->assertRedirectToRoute('user-profile.edit')
-        ->assertSessionHasErrors('password');
-
-    expect($user->fresh())->not->toBeNull();
-});
-
-it('requires correct password to delete account', function (): void {
-    $user = User::factory()->create([
-        'password' => Hash::make('password'),
-    ]);
-
-    $response = $this->actingAs($user)
-        ->fromRoute('user-profile.edit')
-        ->delete(route('user.destroy'), [
-            'password' => 'wrong-password',
-        ]);
-
-    $response->assertRedirectToRoute('user-profile.edit')
-        ->assertSessionHasErrors('password');
-
-    expect($user->fresh())->not->toBeNull();
-});
-
-it('redirects authenticated users away from registration', function (): void {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)
-        ->fromRoute('dashboard')
-        ->get(route('register'));
-
-    $response->assertRedirectToRoute('dashboard');
-});
-
-it('requires verified email to delete account', function (): void {
-    $user = User::factory()->unverified()->create([
-        'password' => Hash::make('password'),
-    ]);
-
-    $response = $this->actingAs($user)
-        ->fromRoute('user-profile.edit')
-        ->delete(route('user.destroy'), [
-            'password' => 'password',
-        ]);
-
-    $response->assertRedirectToRoute('verification.notice');
-
-    expect($user->fresh())->not->toBeNull();
 });

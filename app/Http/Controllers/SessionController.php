@@ -4,43 +4,45 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateSessionRequest;
+use App\Actions\SyncGitHubUser;
+use App\Enums\Timeline;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Inertia\Response;
+use Laravel\Socialite\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
+use Laravel\Socialite\Two\User as GitHubUser;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 
 final readonly class SessionController
 {
-    public function create(Request $request): Response
+    public function create(): SymfonyRedirectResponse
     {
-        return Inertia::render('session/create', [
-            'canResetPassword' => Route::has('password.request'),
-            'canRegister' => Route::has('register'),
-            'status' => $request->session()->get('status'),
-        ]);
+        return Socialite::driver('github')->redirect();
     }
 
-    public function store(CreateSessionRequest $request): RedirectResponse
+    public function store(Request $request, SyncGitHubUser $action): RedirectResponse
     {
-        $user = $request->validateCredentials();
-
-        if ($user->hasEnabledTwoFactorAuthentication()) {
-            $request->session()->put([
-                'login.id' => $user->getKey(),
-                'login.remember' => $request->boolean('remember'),
-            ]);
-
-            return to_route('two-factor.login');
+        if ($request->has('error')) {
+            return $this->failed();
         }
 
-        Auth::login($user, $request->boolean('remember'));
+        try {
+            $githubUser = Socialite::driver('github')->user();
+        } catch (InvalidStateException) {
+            return $this->failed();
+        }
+
+        assert($githubUser instanceof GitHubUser);
+
+        $user = $action->handle($githubUser);
+
+        Auth::login($user, remember: true);
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('timeline.show', Timeline::Following, absolute: false));
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -50,6 +52,16 @@ final readonly class SessionController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return to_route('home');
+    }
+
+    private function failed(): RedirectResponse
+    {
+        Inertia::flash('toast', [
+            'type' => 'error',
+            'message' => __('Unable to sign in with GitHub. Please try again.'),
+        ]);
+
+        return to_route('home');
     }
 }

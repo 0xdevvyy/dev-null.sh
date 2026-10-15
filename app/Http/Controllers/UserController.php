@@ -4,42 +4,30 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\CreateUser;
 use App\Actions\DeleteUser;
-use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\DeleteUserRequest;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final readonly class UserController
 {
-    public function create(): Response
+    public function show(#[CurrentUser] User $currentUser, User $user): Response
     {
-        return Inertia::render('user/create', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
+        $user->loadCount(['posts', 'followers', 'following']);
+
+        return Inertia::render('user/show', [
+            'user' => $user,
+            'isFollowing' => $currentUser->isFollowing($user),
+            'posts' => Inertia::scroll(fn () => $user->posts()
+                ->with('user')
+                ->latest()
+                ->latest('id')
+                ->cursorPaginate(20)),
         ]);
-    }
-
-    public function store(CreateUserRequest $request, CreateUser $action): RedirectResponse
-    {
-        /** @var array<string, mixed> $attributes */
-        $attributes = $request->safe()->except('password');
-
-        $user = $action->handle(
-            $attributes,
-            $request->string('password')->value(),
-        );
-
-        Auth::login($user);
-
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     public function destroy(DeleteUserRequest $request, #[CurrentUser] User $user, DeleteUser $action): RedirectResponse

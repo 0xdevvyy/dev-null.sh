@@ -8,13 +8,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class DeleteUserRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     /**
-     * @return array<string, array<int, string>>
+     * @return array{}
      */
     public function rules(): array
     {
-        return [
-            'password' => ['required', 'current_password'],
-        ];
+        return [];
     }
 }

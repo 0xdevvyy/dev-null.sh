@@ -6,7 +6,6 @@ namespace Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -14,38 +13,36 @@ use Illuminate\Support\Str;
  */
 final class UserFactory extends Factory
 {
-    private static ?string $password = null;
-
     /**
      * @return array<string, mixed>
      */
     public function definition(): array
     {
+        $username = fake()->unique()->userName();
+
         return [
+            'github_id' => (string) fake()->unique()->numberBetween(1, 999_999_999),
+            'username' => $username,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => self::$password ??= Hash::make('password'),
+            'avatar_url' => 'https://avatars.githubusercontent.com/u/'.fake()->numberBetween(1, 999_999),
+            'bio' => fake()->sentence(),
+            'location' => fake()->city(),
+            'website' => fake()->url(),
+            'company' => fake()->company(),
             'remember_token' => Str::random(10),
-            'two_factor_secret' => Str::random(10),
-            'two_factor_recovery_codes' => Str::random(10),
-            'two_factor_confirmed_at' => now(),
         ];
     }
 
-    public function unverified(): self
+    public function withoutProfile(): self
     {
         return $this->state(fn (array $attributes): array => [
-            'email_verified_at' => null,
-        ]);
-    }
-
-    public function withoutTwoFactor(): self
-    {
-        return $this->state(fn (array $attributes): array => [
-            'two_factor_secret' => null,
-            'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at' => null,
+            'email' => null,
+            'avatar_url' => null,
+            'bio' => null,
+            'location' => null,
+            'website' => null,
+            'company' => null,
         ]);
     }
 }

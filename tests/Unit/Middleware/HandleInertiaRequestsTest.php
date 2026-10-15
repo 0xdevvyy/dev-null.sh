@@ -32,7 +32,7 @@ it('shares null user when guest', function (): void {
 it('shares authenticated user data', function (): void {
     $user = User::factory()->create([
         'name' => 'Test User',
-        'email' => 'test@example.com',
+        'username' => 'test-user',
     ]);
 
     $middleware = new HandleInertiaRequests();
@@ -45,7 +45,7 @@ it('shares authenticated user data', function (): void {
     expect($shared['auth']['user'])->not->toBeNull()
         ->and($shared['auth']['user']->id)->toBe($user->id)
         ->and($shared['auth']['user']->name)->toBe('Test User')
-        ->and($shared['auth']['user']->email)->toBe('test@example.com');
+        ->and($shared['auth']['user']->username)->toBe('test-user');
 });
 
 it('defaults sidebarOpen to true when no cookie', function (): void {

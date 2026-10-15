@@ -1,15 +1,12 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
-import UserProfileController from '@/actions/App/Http/Controllers/UserProfileController';
+import { Head, Link, usePage } from '@inertiajs/react';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { UserAvatar } from '@/components/user-avatar';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { show } from '@/routes/user';
 import { edit } from '@/routes/user-profile';
-import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -19,7 +16,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Edit({ status }: { status?: string }) {
+export default function Edit() {
     const { auth } = usePage().props;
 
     return (
@@ -32,91 +29,33 @@ export default function Edit({ status }: { status?: string }) {
                 <Heading
                     variant="small"
                     title="Profile information"
-                    description="Update your name and email address"
+                    description="Your profile is synced from GitHub every time you sign in"
                 />
 
-                <Form
-                    {...UserProfileController.update.form()}
-                    options={{
-                        preserveScroll: true,
-                    }}
-                    className="space-y-6"
-                >
-                    {({ processing, errors }) => (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                <div className="flex items-center gap-4">
+                    <UserAvatar user={auth.user} className="size-16" />
+                    <div>
+                        <p className="font-medium">{auth.user.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                            @{auth.user.username}
+                        </p>
+                    </div>
+                </div>
 
-                                <Input
-                                    id="name"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.name}
-                                    name="name"
-                                    required
-                                    autoComplete="name"
-                                    placeholder="Full name"
-                                />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.name}
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.email}
-                                    name="email"
-                                    required
-                                    autoComplete="username"
-                                    placeholder="Email address"
-                                />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.email}
-                                />
-                            </div>
-
-                            {auth.user.email_verified_at === null && (
-                                <div>
-                                    <p className="-mt-4 text-sm text-muted-foreground">
-                                        Your email address is unverified.{' '}
-                                        <Link
-                                            href={send()}
-                                            as="button"
-                                            className="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                                        >
-                                            Click here to resend the
-                                            verification email.
-                                        </Link>
-                                    </p>
-
-                                    {status === 'verification-link-sent' && (
-                                        <div className="mt-2 text-sm font-medium text-green-600">
-                                            A new verification link has been
-                                            sent to your email address.
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-profile-button"
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </Form>
+                <div className="flex gap-2">
+                    <Button asChild>
+                        <a
+                            href="https://github.com/settings/profile"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Edit on GitHub
+                        </a>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <Link href={show(auth.user)}>View profile</Link>
+                    </Button>
+                </div>
             </div>
 
             <DeleteUser />

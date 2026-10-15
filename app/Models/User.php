@@ -6,44 +6,43 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\Contracts\PasskeyUser;
-use Laravel\Fortify\PasskeyAuthenticatable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
  * @property-read string $id
+ * @property-read string $github_id
+ * @property-read string $username
  * @property-read string $name
- * @property-read string $email
- * @property-read CarbonInterface|null $email_verified_at
- * @property-read string $password
+ * @property-read string|null $email
+ * @property-read string|null $avatar_url
+ * @property-read string|null $bio
+ * @property-read string|null $location
+ * @property-read string|null $website
+ * @property-read string|null $company
  * @property-read string|null $remember_token
- * @property-read string|null $two_factor_secret
- * @property-read string|null $two_factor_recovery_codes
- * @property-read CarbonInterface|null $two_factor_confirmed_at
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
+ * @property-read Collection<int, Post> $posts
+ * @property-read Collection<int, User> $following
+ * @property-read Collection<int, User> $followers
  */
 #[Hidden([
-    'password',
+    'github_id',
+    'email',
     'remember_token',
-    'two_factor_secret',
-    'two_factor_recovery_codes',
 ])]
-final class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
+final class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
 
     use HasUuids;
-    use Notifiable;
-    use PasskeyAuthenticatable;
-    use TwoFactorAuthenticatable;
 
     /**
      * @return array<string, string>
@@ -52,16 +51,55 @@ final class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return [
             'id' => 'string',
+            'github_id' => 'string',
+            'username' => 'string',
             'name' => 'string',
             'email' => 'string',
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'avatar_url' => 'string',
+            'bio' => 'string',
+            'location' => 'string',
+            'website' => 'string',
+            'company' => 'string',
             'remember_token' => 'string',
-            'two_factor_secret' => 'string',
-            'two_factor_recovery_codes' => 'string',
-            'two_factor_confirmed_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return HasMany<Post, $this>
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'follows', 'follower_id', 'followed_id')->withTimestamps();
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'follows', 'followed_id', 'follower_id')->withTimestamps();
+    }
+
+    /**
+     * Users sign in with GitHub, so they have no password.
+     */
+    public function getAuthPassword(): string
+    {
+        return '';
+    }
+
+    public function isFollowing(self $user): bool
+    {
+        return $this->following()->whereKey($user->id)->exists();
     }
 }

@@ -12,13 +12,15 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table): void {
             $table->uuid('id')->primary();
+            $table->string('github_id')->unique();
+            $table->string('username')->unique();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->text('two_factor_secret')->nullable();
-            $table->text('two_factor_recovery_codes')->nullable();
-            $table->timestamp('two_factor_confirmed_at')->nullable();
+            $table->string('email')->nullable();
+            $table->string('avatar_url')->nullable();
+            $table->string('bio')->nullable();
+            $table->string('location')->nullable();
+            $table->string('website')->nullable();
+            $table->string('company')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
