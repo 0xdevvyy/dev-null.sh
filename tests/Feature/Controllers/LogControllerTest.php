@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Log;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Commit;
 use App\Models\User;
 
@@ -78,6 +79,69 @@ it('requires authentication', function (Log $log): void {
     $response->assertRedirectToRoute('home');
 })->with(Log::cases());
 
+it('counts commits newer than a given commit', function (): void {
+    $user = User::factory()->create();
+    $followed = User::factory()->create();
+    $user->following()->attach($followed);
+
+    $seen = Commit::factory()->for($followed)->create(['created_at' => now()->subMinutes(5)]);
+    Commit::factory()->for($followed)->count(2)->create();
+    Commit::factory()->for($followed)->create(['created_at' => now()->subMinutes(10)]);
+    Commit::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->withHeaders([
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) new HandleInertiaRequests()->version(request()),
+            'X-Inertia-Partial-Component' => 'log/show',
+            'X-Inertia-Partial-Data' => 'newCommitsCount',
+        ])
+        ->get('/log/following?since='.$seen->id);
+
+    $response->assertOk()
+        ->assertJsonPath('props.newCommitsCount', 2);
+});
+
+it('does not count new commits on a regular visit', function (): void {
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page->missing('newCommitsCount'));
+});
+
+it('suggests recent commits from other developers when following nobody', function (): void {
+    $user = User::factory()->create();
+    $author = User::factory()->create();
+
+    Commit::factory()->for($author)->create(['title' => 'Older', 'created_at' => now()->subMinute()]);
+    Commit::factory()->for($author)->create(['title' => 'Newer']);
+    Commit::factory()->for(User::factory())->create(['created_at' => now()->subMinutes(2)]);
+    Commit::factory()->for($user)->create();
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('suggestions', 2)
+            ->where('suggestions.0.title', 'Newer')
+            ->where('suggestions.0.user.id', $author->id)
+            ->where('suggestions.1.user.id', fn (string $id): bool => $id !== $author->id && $id !== $user->id));
+});
+
+it('does not suggest commits when following someone', function (): void {
+    $user = User::factory()->create();
+    $user->following()->attach(User::factory()->create());
+    Commit::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page->where('suggestions', []));
+});
+
 it('hides pending commits of others from the log', function (Log $log): void {
     $user = User::factory()->create();
     $followed = User::factory()->create();
@@ -96,3 +160,19 @@ it('hides pending commits of others from the log', function (Log $log): void {
             ->where('commits.data.0.title', 'Mine')
             ->where('commits.data.0.status', 'pending'));
 })->with(Log::cases());
+
+it('only suggests approved commits', function (): void {
+    $user = User::factory()->create();
+
+    Commit::factory()->pending()->create(['title' => 'Pending']);
+    Commit::factory()->rejected()->create(['title' => 'Rejected']);
+    Commit::factory()->create(['title' => 'Approved']);
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('suggestions', 1)
+            ->where('suggestions.0.title', 'Approved'));
+});

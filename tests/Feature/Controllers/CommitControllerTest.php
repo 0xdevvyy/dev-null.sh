@@ -25,6 +25,21 @@ it('may create a commit', function (): void {
         ->and($commit->description)->toBe('Hello, devnull!');
 });
 
+it('flashes the created commit', function (): void {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->fromRoute('log.show', Log::Following)
+        ->post(route('commit.store'), ['title' => 'Initial commit']);
+
+    $commit = $user->commits()->sole();
+
+    $response->assertInertiaFlash('committed', [
+        'id' => $commit->id,
+        'title' => 'Initial commit',
+    ]);
+});
+
 it('may create a commit without a description', function (): void {
     $user = User::factory()->create();
 
@@ -116,7 +131,11 @@ it('rate limits commit creation', function (): void {
         ->fromRoute('log.show', Log::Following)
         ->post(route('commit.store'), ['title' => 'One too many']);
 
-    $response->assertTooManyRequests();
+    $response->assertRedirectToRoute('log.show', Log::Following)
+        ->assertInertiaFlash('toast', [
+            'type' => 'error',
+            'message' => 'Slow down: 10 commits a minute. Even CI takes breaks.',
+        ]);
 
     expect($user->commits()->count())->toBe(10);
 });
