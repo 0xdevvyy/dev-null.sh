@@ -12,7 +12,7 @@ export type User = {
 };
 
 export type Profile = User & {
-    posts_count: number;
+    commits_count: number;
     followers_count: number;
     following_count: number;
 };

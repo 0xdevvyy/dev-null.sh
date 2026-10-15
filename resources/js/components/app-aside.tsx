@@ -5,7 +5,7 @@ import { show } from '@/routes/user';
 
 const rules = [
     'Everyone here signed in with GitHub.',
-    'Commits are plain text, 280 characters max.',
+    'A commit is a title of up to 72 characters, plus an optional description.',
     'No likes, no reposts, no algorithm. Newest first.',
     'Profiles mirror GitHub. Edit yours there.',
 ];
@@ -41,9 +41,9 @@ export function AppAside() {
                 <dl className="mt-4 flex gap-4 text-sm">
                     {[
                         {
-                            count: auth.user.posts_count,
+                            count: auth.user.commits_count,
                             label:
-                                auth.user.posts_count === 1
+                                auth.user.commits_count === 1
                                     ? 'commit'
                                     : 'commits',
                         },

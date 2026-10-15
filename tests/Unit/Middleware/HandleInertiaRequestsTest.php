@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Models\Post;
+use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -49,8 +49,8 @@ it('shares authenticated user data', function (): void {
         ->and($shared['auth']['user']->username)->toBe('test-user');
 });
 
-it('shares the authenticated user post and follow counts', function (): void {
-    $user = User::factory()->has(Post::factory()->count(2))->create();
+it('shares the authenticated user commit and follow counts', function (): void {
+    $user = User::factory()->has(Commit::factory()->count(2))->create();
     $user->following()->attach(User::factory()->count(3)->create());
     User::factory()->create()->following()->attach($user);
 
@@ -61,7 +61,7 @@ it('shares the authenticated user post and follow counts', function (): void {
 
     $shared = $middleware->share($request);
 
-    expect($shared['auth']['user']->posts_count)->toBe(2)
+    expect($shared['auth']['user']->commits_count)->toBe(2)
         ->and($shared['auth']['user']->following_count)->toBe(3)
         ->and($shared['auth']['user']->followers_count)->toBe(1);
 });

@@ -6,7 +6,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class CreatePostRequest extends FormRequest
+final class CreateCommitRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -19,7 +19,8 @@ final class CreatePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['required', 'string', 'min:3', 'max:280'],
+            'title' => ['required', 'string', 'min:3', 'max:72'],
+            'description' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

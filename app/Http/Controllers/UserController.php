@@ -18,13 +18,13 @@ final readonly class UserController
 {
     public function show(#[CurrentUser] User $currentUser, User $user, UserActivityQuery $activity): Response
     {
-        $user->loadCount(['posts', 'followers', 'following']);
+        $user->loadCount(['commits', 'followers', 'following']);
 
         return Inertia::render('user/show', [
             'user' => $user,
             'isFollowing' => $currentUser->isFollowing($user),
             'activity' => $activity->get($user),
-            'posts' => Inertia::scroll(fn () => $user->posts()
+            'commits' => Inertia::scroll(fn () => $user->commits()
                 ->with('user')
                 ->latest()
                 ->latest('id')

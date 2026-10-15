@@ -19,7 +19,7 @@ final readonly class UserActivityQuery
         $today = CarbonImmutable::now();
         $from = $today->subWeeks(52)->startOfWeek(CarbonInterface::SUNDAY);
 
-        $counts = $user->posts()
+        $counts = $user->commits()
             ->where('created_at', '>=', $from)
             ->selectRaw('date(created_at) as day, count(*) as aggregate')
             ->groupBy('day')

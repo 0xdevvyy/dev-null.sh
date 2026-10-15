@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Queries;
 
-use App\Models\Post;
+use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
-final readonly class EveryoneTimelineQuery implements TimelineQuery
+final readonly class EveryoneLogQuery implements LogQuery
 {
     /**
-     * @return Builder<Post>
+     * @return Builder<Commit>
      */
     public function builder(User $user): Builder
     {
-        return Post::query()
+        return Commit::query()
             ->with('user')
             ->latest()
             ->latest('id');

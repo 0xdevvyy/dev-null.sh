@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { GitCommitVertical, Globe, Settings2, UserRound } from 'lucide-react';
-import TimelineController from '@/actions/App/Http/Controllers/TimelineController';
+import LogController from '@/actions/App/Http/Controllers/LogController';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import {
@@ -23,12 +23,12 @@ function useNavItems(): (NavItem & { isActive: boolean })[] {
     return [
         {
             title: 'Log',
-            href: TimelineController.show('following'),
+            href: LogController.show('following'),
             icon: GitCommitVertical,
         },
         {
             title: 'Everyone',
-            href: TimelineController.show('everyone'),
+            href: LogController.show('everyone'),
             icon: Globe,
         },
         {
@@ -57,7 +57,7 @@ export function AppNav() {
     return (
         <header className="sticky top-0 hidden h-svh w-20 shrink-0 flex-col items-center py-6 md:flex lg:w-64 lg:items-stretch lg:px-4">
             <Link
-                href={TimelineController.show('following')}
+                href={LogController.show('following')}
                 className="mb-8 rounded-md px-3 lg:px-3"
                 aria-label="devnull, go to your log"
             >
@@ -120,7 +120,7 @@ export function MobileHeader() {
     return (
         <div className="flex h-14 items-center justify-between border-b px-4 md:hidden">
             <Link
-                href={TimelineController.show('following')}
+                href={LogController.show('following')}
                 aria-label="devnull, go to your log"
             >
                 <AppLogo className="text-lg" />

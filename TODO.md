@@ -1,6 +1,6 @@
 # devnull.com — TODO
 
-A social network for developers. Sign in with GitHub, have a Twitter-style profile imported from GitHub, follow people, post short text updates, and read a timeline.
+A social network for developers. Sign in with GitHub, have a Twitter-style profile imported from GitHub, follow people, make commits (short text updates), and read the log.
 
 **Keep it stupidly simple:** no comments, reactions, images, notifications, or DMs.
 
@@ -10,8 +10,9 @@ A social network for developers. Sign in with GitHub, have a Twitter-style profi
 
 - **Auth:** GitHub is the only way to sign in (`laravel/socialite`). No email/password, password reset, email verification, 2FA, or passkeys — Fortify removed.
 - **Profile:** Twitter-style, mirrored from GitHub on every login (avatar, name, username, bio, location, website, company). No editing on devnull.
-- **Posts:** plain text, max 280 characters; the author can create and delete — no editing. Rate limited to 10 posts per minute per user.
-- **Timeline:** my posts + posts from people I follow, newest first, with Inertia infinite scroll. An "Everyone" timeline shows all posts. Each timeline is a `Timeline` enum case served by `TimelineController@show`.
+- **Commits:** a post is a *commit*: a required title (max 72 characters, like a git subject line) and an optional description (max 500 characters). The author can create and delete — no editing (no `--amend`). Rate limited to 10 commits per minute per user.
+- **Log:** a timeline is a *log*. "Following" = my commits + commits from people I follow; "Everyone" = all commits. Newest first, Inertia infinite scroll. A profile shows that user's log. Each log is a `Log` enum case served by `LogController@show`.
+- **Metaphor, nouns only:** the git vocabulary is limited to *commit* and *log*. No branches, forks, stars, pushes, diffs, or PRs — those would just be features from "Not now" in disguise.
 - **Visibility:** everything except the landing page requires login.
 
 ---
@@ -20,7 +21,7 @@ A social network for developers. Sign in with GitHub, have a Twitter-style profi
 
 **users** — `id` (uuid), `github_id` (unique), `username` (unique), `name`, `email` (nullable, hidden), `avatar_url`, `bio`, `location`, `website`, `company`, `remember_token`, timestamps
 
-**posts** — `id` (uuid), `user_id` (cascade delete), `body` (280), timestamps; indexes on (`user_id`, `created_at`) and `created_at`
+**commits** — `id` (uuid), `user_id` (cascade delete), `title` (72), `description` (nullable, 500), timestamps; indexes on (`user_id`, `created_at`) and `created_at`
 
 **follows** — (`follower_id`, `followed_id`) primary key, both cascade delete, timestamps; index on `followed_id`
 
@@ -58,6 +59,17 @@ A social network for developers. Sign in with GitHub, have a Twitter-style profi
 - [x] `TimelineController@show` at `/timelines/{timeline}` (`App\Enums\Timeline`: `following`, `everyone`), each backed by a `App\Queries\*TimelineQuery`, cursor-paginated via `Inertia::scroll()` + `<InfiniteScroll>`
 - [x] Empty states
 
+## Milestone 5 — Commits & logs ✅
+
+- [x] `posts` migration → `commits` (edited in place, no real data yet): `body` → `title` (72) + `description` (nullable, 500)
+- [x] `Post` → `Commit` model + `CommitFactory`; `User::posts()` → `commits()`
+- [x] Actions `CreateCommit` (title + optional description), `DeleteCommit`
+- [x] `CommitController@store`, `@destroy` + `CreateCommitRequest` / `DeleteCommitRequest`; routes `/commits`, `/commits/{commit}`; `commits` rate limiter
+- [x] `Timeline` → `Log` everywhere: `App\Enums\Log`, `App\Queries\*LogQuery`, `LogController@show` at `/log/{log}`
+- [x] Composer: title input with a 72-char counter, optional description textarea, "Commit" button
+- [x] `CommitCard`: title in medium weight, description muted below; short hash in monospace next to the timestamp, from the **end** of the UUID (v7 UUIDs start with a timestamp). Computed on the frontend — Rector wants model accessors `protected`, the strict arch preset forbids protected methods.
+- [x] Copy: "Log" nav item, "Commits" profile count, empty states, delete confirmation
+
 ---
 
 ## Next up
@@ -70,4 +82,4 @@ A social network for developers. Sign in with GitHub, have a Twitter-style profi
 
 ## Not now
 
-Comments, likes/reactions, reposts, images/media, mentions, hashtags, search, notifications, DMs, other OAuth providers, public API, admin/moderation tools, blocking/muting, header/banner images.
+Comments, likes/reactions (stars), reposts (forks), editing (amend), images/media, mentions, hashtags, search, notifications, DMs, other OAuth providers, public API, admin/moderation tools, blocking/muting, header/banner images, importing real GitHub commits, commit permalink pages.

@@ -10,10 +10,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table): void {
+        Schema::create('commits', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
-            $table->string('body', 280);
+            $table->string('title', 72);
+            $table->string('description', 500)->nullable();
             $table->timestamps();
 
             $table->index(['user_id', 'created_at']);

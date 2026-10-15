@@ -24,7 +24,7 @@ final class AppServiceProvider extends ServiceProvider
 
     private function bootRateLimitingDefaults(): void
     {
-        RateLimiter::for('posts', function (Request $request): Limit {
+        RateLimiter::for('commits', function (Request $request): Limit {
             $user = $request->user();
             assert($user instanceof User);
 

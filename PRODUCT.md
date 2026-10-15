@@ -22,13 +22,13 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 
 - Sign-in is GitHub OAuth only. Profile changes happen on GitHub ("Edit on GitHub"), then sync at next login.
 - Everything except the landing page requires login.
-- Two timelines: **Following** (my posts plus people I follow) and **Everyone** (all posts), newest first, infinite scroll.
-- Profiles live at `/@{username}` with post, following, and follower counts and the user's posts.
+- Two logs: **Following** (my commits plus people I follow) and **Everyone** (all commits), newest first, infinite scroll.
+- Profiles live at `/@{username}` with commit, following, and follower counts, a commit activity graph, and the user's commits.
 - Settings: read-only profile, appearance (light/dark/system), delete account.
 
 ## Capabilities and Constraints
 
-- Posts: plain text, 3–280 characters, create and delete only (no editing). Rate limited to 10 posts per minute per user.
+- Commits (posts): a plain-text title of 3–72 characters plus an optional description up to 500 characters; create and delete only (no editing). Rate limited to 10 commits per minute per user.
 - Follow/unfollow, idempotent; self-follow rejected.
 - Deliberately excluded for now: comments, likes/reactions, reposts, images/media, mentions, hashtags, search, notifications, DMs, other OAuth providers, public API, moderation tools, blocking/muting, header/banner images. Future work must not design for these as if they exist.
 - Open: handling GitHub username renames that collide with a stale username.
@@ -38,7 +38,7 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 - Name: **devnull** (lowercase), a nod to `/dev/null`.
 - Voice: dry, terminal-literate humor. Understated wit; copy may wink at Unix and `/dev/null`, but stays clear and never obscures what an action does.
 - Current tagline in use: "A social network for developers."
-- UI vocabulary: the Following timeline is the **Log**; posts are **commits** ("Commit" button, "3 commits"). Routes, models, and code keep `timeline`/`post`.
+- Vocabulary: a post is a **commit** and a timeline is a **log**, in the UI and in code (`Commit` model, `LogController`, `/log/{log}`). The git metaphor stops at those two nouns: no branches, forks, stars, pushes, diffs, or PRs.
 
 ## Evidence on Hand
 

@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace App\Queries;
 
-use App\Models\Post;
+use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
-final readonly class FollowingTimelineQuery implements TimelineQuery
+final readonly class FollowingLogQuery implements LogQuery
 {
     /**
-     * @return Builder<Post>
+     * @return Builder<Commit>
      */
     public function builder(User $user): Builder
     {
         $following = $user->following();
 
-        return Post::query()
+        return Commit::query()
             ->where(fn (Builder $query): Builder => $query
                 ->whereIn('user_id', $following->newPivotQuery()->select($following->getRelatedPivotKeyName()))
                 ->orWhere('user_id', $user->id))

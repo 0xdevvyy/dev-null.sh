@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonInterface;
-use Database\Factories\PostFactory;
+use Database\Factories\CommitFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,14 +14,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property-read string $id
  * @property-read string $user_id
- * @property-read string $body
+ * @property-read string $title
+ * @property-read string|null $description
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
  * @property-read User $user
  */
-final class Post extends Model
+final class Commit extends Model
 {
-    /** @use HasFactory<PostFactory> */
+    /** @use HasFactory<CommitFactory> */
     use HasFactory;
 
     use HasUuids;
@@ -34,7 +35,8 @@ final class Post extends Model
         return [
             'id' => 'string',
             'user_id' => 'string',
-            'body' => 'string',
+            'title' => 'string',
+            'description' => 'string',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

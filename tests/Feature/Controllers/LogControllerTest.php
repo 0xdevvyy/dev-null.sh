@@ -1,0 +1,79 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Enums\Log;
+use App\Models\Commit;
+use App\Models\User;
+
+it('renders own commits and commits of followed users newest first', function (): void {
+    $user = User::factory()->create();
+    $followed = User::factory()->create();
+    $stranger = User::factory()->create();
+
+    $user->following()->attach($followed);
+
+    Commit::factory()->for($user)->create(['title' => 'Mine', 'created_at' => now()->subMinutes(2)]);
+    Commit::factory()->for($followed)->create(['title' => 'Followed', 'created_at' => now()->subMinute()]);
+    Commit::factory()->for($stranger)->create(['title' => 'Stranger']);
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('log/show')
+            ->where('log', 'following')
+            ->has('commits.data', 2)
+            ->where('commits.data.0.title', 'Followed')
+            ->where('commits.data.0.user.id', $followed->id)
+            ->missing('commits.data.0.user.email')
+            ->where('commits.data.1.title', 'Mine'));
+});
+
+it('renders commits of everyone newest first', function (): void {
+    $user = User::factory()->create();
+
+    Commit::factory()->create(['title' => 'Older', 'created_at' => now()->subMinute()]);
+    Commit::factory()->create(['title' => 'Newer']);
+
+    $response = $this->actingAs($user)
+        ->get('/log/everyone');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('log/show')
+            ->where('log', 'everyone')
+            ->has('commits.data', 2)
+            ->where('commits.data.0.title', 'Newer')
+            ->where('commits.data.1.title', 'Older'));
+});
+
+it('paginates the log', function (Log $log): void {
+    $user = User::factory()->create();
+
+    Commit::factory()->for($user)->count(25)->sequence(
+        fn ($sequence): array => ['created_at' => now()->subMinutes($sequence->index)],
+    )->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('log.show', $log));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('commits.data', 20)
+            ->whereNot('commits.next_cursor', null));
+})->with(Log::cases());
+
+it('returns not found for unknown logs', function (): void {
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/log/unknown');
+
+    $response->assertNotFound();
+});
+
+it('requires authentication', function (Log $log): void {
+    $response = $this->get(route('log.show', $log));
+
+    $response->assertRedirectToRoute('home');
+})->with(Log::cases());

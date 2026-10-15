@@ -1,32 +1,32 @@
 import { InfiniteScroll } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import { CommitCard } from '@/components/commit-card';
 import { GraphRail } from '@/components/graph-rail';
-import { PostCard } from '@/components/post-card';
 import { Spinner } from '@/components/ui/spinner';
 import { laneFor } from '@/lib/utils';
-import type { CursorPaginated, Post } from '@/types';
+import type { Commit, CursorPaginated } from '@/types';
 
-export function PostFeed({
-    posts,
+export function CommitFeed({
+    commits,
     empty,
     end,
     firstLane,
 }: {
-    posts: CursorPaginated<Post>;
+    commits: CursorPaginated<Commit>;
     empty: ReactNode;
     end: string;
     firstLane?: string;
 }) {
-    if (posts.data.length === 0) {
+    if (commits.data.length === 0) {
         return <div className="px-6 py-16 text-center sm:px-12">{empty}</div>;
     }
 
-    const lastPost = posts.data.at(-1);
+    const lastCommit = commits.data.at(-1);
 
     return (
         <>
             <InfiniteScroll
-                data="posts"
+                data="commits"
                 onlyNext
                 preserveUrl
                 loading={
@@ -35,24 +35,24 @@ export function PostFeed({
                     </div>
                 }
             >
-                {posts.data.map((post, index) => (
-                    <PostCard
-                        key={post.id}
-                        post={post}
+                {commits.data.map((commit, index) => (
+                    <CommitCard
+                        key={commit.id}
+                        commit={commit}
                         previousLane={
                             index === 0
                                 ? firstLane
-                                : laneFor(posts.data[index - 1].user_id)
+                                : laneFor(commits.data[index - 1].user_id)
                         }
                     />
                 ))}
             </InfiniteScroll>
 
-            {posts.next_cursor === null && lastPost && (
+            {commits.next_cursor === null && lastCommit && (
                 <div className="flex">
                     <GraphRail
-                        lane={laneFor(lastPost.user_id)}
-                        previousLane={laneFor(lastPost.user_id)}
+                        lane={laneFor(lastCommit.user_id)}
+                        previousLane={laneFor(lastCommit.user_id)}
                         variant="root"
                         hasTail={false}
                     />

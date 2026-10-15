@@ -2,17 +2,18 @@
 
 declare(strict_types=1);
 
-use App\Models\Post;
+use App\Models\Commit;
 use App\Models\User;
 
 test('to array', function (): void {
-    $post = Post::factory()->create()->refresh();
+    $commit = Commit::factory()->create()->refresh();
 
-    expect(array_keys($post->toArray()))
+    expect(array_keys($commit->toArray()))
         ->toBe([
             'id',
             'user_id',
-            'body',
+            'title',
+            'description',
             'created_at',
             'updated_at',
         ]);
@@ -20,7 +21,7 @@ test('to array', function (): void {
 
 it('belongs to a user', function (): void {
     $user = User::factory()->create();
-    $post = Post::factory()->for($user)->create();
+    $commit = Commit::factory()->for($user)->create();
 
-    expect($post->user->is($user))->toBeTrue();
+    expect($commit->user->is($user))->toBeTrue();
 });

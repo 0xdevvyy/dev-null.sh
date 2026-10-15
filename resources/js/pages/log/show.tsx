@@ -1,56 +1,56 @@
 import { Head, Link } from '@inertiajs/react';
-import TimelineController from '@/actions/App/Http/Controllers/TimelineController';
+import LogController from '@/actions/App/Http/Controllers/LogController';
+import { CommitComposer } from '@/components/commit-composer';
+import { CommitFeed, EmptyFeed } from '@/components/commit-feed';
 import { PageTabs } from '@/components/page-tabs';
-import { PostComposer } from '@/components/post-composer';
-import { EmptyFeed, PostFeed } from '@/components/post-feed';
 import AppLayout from '@/layouts/app-layout';
-import type { CursorPaginated, Post, Timeline } from '@/types';
+import type { Commit, CursorPaginated, Log } from '@/types';
 
 export default function Show({
-    timeline,
-    posts,
+    log,
+    commits,
 }: {
-    timeline: Timeline;
-    posts: CursorPaginated<Post>;
+    log: Log;
+    commits: CursorPaginated<Commit>;
 }) {
     return (
         <>
-            <Head title={timeline === 'following' ? 'Log' : 'Everyone'} />
+            <Head title={log === 'following' ? 'Log' : 'Everyone'} />
 
             <div className="sticky top-0 z-10 bg-card">
                 <h1 className="sr-only">
-                    {timeline === 'following' ? 'Log' : 'Everyone'}
+                    {log === 'following' ? 'Log' : 'Everyone'}
                 </h1>
                 <PageTabs
-                    label="Timelines"
+                    label="Logs"
                     tabs={[
                         {
                             title: 'Log',
-                            href: TimelineController.show('following'),
-                            isActive: timeline === 'following',
+                            href: LogController.show('following'),
+                            isActive: log === 'following',
                         },
                         {
                             title: 'Everyone',
-                            href: TimelineController.show('everyone'),
-                            isActive: timeline === 'everyone',
+                            href: LogController.show('everyone'),
+                            isActive: log === 'everyone',
                         },
                     ]}
                 />
             </div>
 
-            <PostComposer />
+            <CommitComposer />
 
-            <PostFeed
-                posts={posts}
+            <CommitFeed
+                commits={commits}
                 firstLane="var(--rail)"
                 end="That's the root commit. There's nothing before it."
                 empty={
-                    timeline === 'following' ? (
+                    log === 'following' ? (
                         <EmptyFeed command="fatal: your log does not have any commits yet">
                             Your log shows your commits and commits from people
                             you follow. Find someone worth following on{' '}
                             <Link
-                                href={TimelineController.show('everyone')}
+                                href={LogController.show('everyone')}
                                 className="font-medium text-primary underline"
                             >
                                 Everyone
@@ -59,8 +59,8 @@ export default function Show({
                         </EmptyFeed>
                     ) : (
                         <EmptyFeed command="fatal: no commits yet">
-                            Nobody has committed anything. Be the first. It's
-                            280 characters; you'll be fine.
+                            Nobody has committed anything. Be the first. It's 72
+                            characters; you'll be fine.
                         </EmptyFeed>
                     )
                 }

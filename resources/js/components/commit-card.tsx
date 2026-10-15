@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import PostController from '@/actions/App/Http/Controllers/PostController';
+import CommitController from '@/actions/App/Http/Controllers/CommitController';
 import { GraphRail } from '@/components/graph-rail';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
@@ -13,13 +13,13 @@ import {
     shortHash,
 } from '@/lib/utils';
 import { show } from '@/routes/user';
-import type { Post } from '@/types';
+import type { Commit } from '@/types';
 
-export function PostCard({
-    post,
+export function CommitCard({
+    commit,
     previousLane,
 }: {
-    post: Post;
+    commit: Commit;
     previousLane?: string;
 }) {
     const { auth } = usePage().props;
@@ -27,10 +27,10 @@ export function PostCard({
         'idle' | 'confirming' | 'deleting'
     >('idle');
 
-    const isOwn = post.user_id === auth.user.id;
-    const hash = shortHash(post.id);
+    const isOwn = commit.user_id === auth.user.id;
+    const hash = shortHash(commit.id);
 
-    const deletePost = () => {
+    const deleteCommit = () => {
         setDeletion('deleting');
 
         const prefersReducedMotion = window.matchMedia(
@@ -39,7 +39,7 @@ export function PostCard({
 
         window.setTimeout(
             () =>
-                router.visit(PostController.destroy(post), {
+                router.visit(CommitController.destroy(commit), {
                     preserveScroll: true,
                     onError: () => setDeletion('idle'),
                 }),
@@ -55,50 +55,50 @@ export function PostCard({
                     ? 'grid-rows-[0fr] opacity-0 delay-400'
                     : 'grid-rows-[1fr]',
             )}
-            data-test="post"
+            data-test="commit"
         >
             <div className="flex min-h-0 overflow-hidden">
                 <GraphRail
-                    lane={laneFor(post.user_id)}
+                    lane={laneFor(commit.user_id)}
                     previousLane={previousLane}
-                    isFresh={isOwn && isWithinSeconds(post.created_at, 15)}
+                    isFresh={isOwn && isWithinSeconds(commit.created_at, 15)}
                 />
 
                 <div className="flex min-w-0 flex-1 gap-3 border-b py-3 pr-4">
                     <Link
-                        href={show(post.user)}
+                        href={show(commit.user)}
                         className="shrink-0 rounded-full"
                     >
-                        <UserAvatar user={post.user} className="size-10" />
+                        <UserAvatar user={commit.user} className="size-10" />
                     </Link>
 
                     <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-1.5 text-[15px]">
                             <Link
-                                href={show(post.user)}
+                                href={show(commit.user)}
                                 className="truncate font-semibold hover:underline"
                             >
-                                {post.user.name}
+                                {commit.user.name}
                             </Link>
                             <span className="truncate font-mono text-[13px] text-muted-foreground">
-                                @{post.user.username}
+                                @{commit.user.username}
                             </span>
                             <span aria-hidden className="text-muted-foreground">
                                 ·
                             </span>
                             <time
-                                dateTime={post.created_at}
+                                dateTime={commit.created_at}
                                 title={new Date(
-                                    post.created_at,
+                                    commit.created_at,
                                 ).toLocaleString()}
                                 className="shrink-0 font-mono text-[13px] text-muted-foreground"
                             >
-                                {formatRelativeTime(post.created_at)}
+                                {formatRelativeTime(commit.created_at)}
                             </time>
 
                             <span
                                 className="ml-auto hidden shrink-0 font-mono text-[13px] text-muted-foreground sm:inline"
-                                title={`Post ${post.id}`}
+                                title={`Commit ${commit.id}`}
                             >
                                 {hash}
                             </span>
@@ -110,7 +110,7 @@ export function PostCard({
                                     aria-label="Delete commit"
                                     title="Delete commit"
                                     className="-my-1 ml-auto shrink-0 self-center rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 sm:ml-1 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 [@media(hover:none)]:opacity-100"
-                                    data-test="delete-post-button"
+                                    data-test="delete-commit-button"
                                 >
                                     <Trash2 className="size-4" />
                                 </button>
@@ -125,9 +125,16 @@ export function PostCard({
                                 rm {hash} → /dev/null
                             </p>
                         ) : (
-                            <p className="mt-0.5 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
-                                {post.body}
-                            </p>
+                            <>
+                                <p className="mt-0.5 text-[15px] leading-snug font-medium break-words">
+                                    {commit.title}
+                                </p>
+                                {commit.description && (
+                                    <p className="mt-1 text-[15px] leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+                                        {commit.description}
+                                    </p>
+                                )}
+                            </>
                         )}
 
                         {deletion === 'confirming' && (
@@ -155,8 +162,8 @@ export function PostCard({
                                 <Button
                                     variant="destructive"
                                     size="sm"
-                                    onClick={deletePost}
-                                    data-test="confirm-delete-post-button"
+                                    onClick={deleteCommit}
+                                    data-test="confirm-delete-commit-button"
                                 >
                                     Delete
                                 </Button>

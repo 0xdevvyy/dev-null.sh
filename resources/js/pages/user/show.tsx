@@ -9,13 +9,13 @@ import {
 import type { CSSProperties } from 'react';
 import UserFollowController from '@/actions/App/Http/Controllers/UserFollowController';
 import { ActivityGraph } from '@/components/activity-graph';
+import { CommitFeed, EmptyFeed } from '@/components/commit-feed';
 import { GitHubIcon } from '@/components/github-icon';
-import { EmptyFeed, PostFeed } from '@/components/post-feed';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import AppLayout from '@/layouts/app-layout';
 import { laneFor } from '@/lib/utils';
-import type { ActivityDay, CursorPaginated, Post, Profile } from '@/types';
+import type { ActivityDay, Commit, CursorPaginated, Profile } from '@/types';
 
 function pluralize(count: number, singular: string, plural: string) {
     return count === 1 ? singular : plural;
@@ -25,12 +25,12 @@ export default function Show({
     user,
     isFollowing,
     activity,
-    posts,
+    commits,
 }: {
     user: Profile;
     isFollowing: boolean;
     activity: ActivityDay[];
-    posts: CursorPaginated<Post>;
+    commits: CursorPaginated<Commit>;
 }) {
     const { auth } = usePage().props;
     const isCurrentUser = auth.user.id === user.id;
@@ -43,8 +43,8 @@ export default function Show({
             <div className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-card px-4">
                 <p className="min-w-0 truncate font-semibold">{user.name}</p>
                 <p className="shrink-0 font-mono text-[13px] text-muted-foreground">
-                    {user.posts_count}{' '}
-                    {pluralize(user.posts_count, 'commit', 'commits')}
+                    {user.commits_count}{' '}
+                    {pluralize(user.commits_count, 'commit', 'commits')}
                 </p>
             </div>
 
@@ -173,9 +173,9 @@ export default function Show({
                 <dl className="mt-4 flex gap-5 text-sm">
                     {[
                         {
-                            count: user.posts_count,
+                            count: user.commits_count,
                             label: pluralize(
-                                user.posts_count,
+                                user.commits_count,
                                 'commit',
                                 'commits',
                             ),
@@ -207,8 +207,8 @@ export default function Show({
 
             <ActivityGraph activity={activity} lane={lane} />
 
-            <PostFeed
-                posts={posts}
+            <CommitFeed
+                commits={commits}
                 end={
                     isCurrentUser
                         ? 'That was your first commit. Everyone starts somewhere.'

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\Timeline;
+use App\Enums\Log;
 use App\Models\User;
 use Laravel\Socialite\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -31,7 +31,7 @@ it('creates a user and logs them in', function (): void {
 
     $response = $this->get(route('login.store'));
 
-    $response->assertRedirectToRoute('timeline.show', Timeline::Following);
+    $response->assertRedirectToRoute('log.show', Log::Following);
 
     $user = User::query()->where('github_id', '583231')->sole();
 
@@ -61,7 +61,7 @@ it('updates an existing user on login', function (): void {
 
     $response = $this->get(route('login.store'));
 
-    $response->assertRedirectToRoute('timeline.show', Timeline::Following);
+    $response->assertRedirectToRoute('log.show', Log::Following);
 
     expect(User::query()->count())->toBeOne()
         ->and($user->refresh()->username)->toBe('octocat');
@@ -116,14 +116,14 @@ it('redirects authenticated users away from login', function (): void {
     $response = $this->actingAs($user)
         ->get(route('login'));
 
-    $response->assertRedirectToRoute('timeline.show', Timeline::Following);
+    $response->assertRedirectToRoute('log.show', Log::Following);
 });
 
 it('may destroy a session', function (): void {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
-        ->fromRoute('timeline.show', Timeline::Following)
+        ->fromRoute('log.show', Log::Following)
         ->post(route('logout'));
 
     $response->assertRedirectToRoute('home');
