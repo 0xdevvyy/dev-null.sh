@@ -271,6 +271,7 @@ Quiet, rectangular, decisive.
 
 ### Inputs / Fields
 - **Composer:** borderless, no visible field chrome: a 17px textarea ("What did you ship?", max 280) that grows with content. Its state is carried by the graph: the staged node is hollow until the body reaches 3 characters, then fills with the author's lane; the tail below it is a dashed Rail Gray line. A mono countdown sits left of the "Commit" button; ⌘/Ctrl+Enter commits.
+- **Stash:** unsent text in the composer and in each reply composer is kept in `localStorage` per signed-in user (cleared on commit, when emptied, and on log out). When a draft comes back after a reload or navigation, a quiet mono `stash@{0}` (title "Restored your unsent draft") sits at the left of the counter row with a muted `drop` text button that discards it. Merely typing never shows it. A thread with a stashed reply prints a muted 11px mono `stash@{0}` after its "Reply" action; Cancel and Escape close the reply composer but keep the stash. Neither element is blue.
 - **Read-only fields (settings):** a hairline-bordered 8px-radius list, mono keys in a 6.5rem column, values in sans; missing values print a mono `null`.
 - **Theme switch:** a bordered segmented group (8px outer, 6px inner) whose selected option uses the active-nav treatment.
 
