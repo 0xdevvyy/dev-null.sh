@@ -71,14 +71,14 @@ final readonly class FetchLinkPreview
      */
     public function handle(LinkPreview $linkPreview): void
     {
+        $metadata = self::NO_METADATA;
+
         try {
             $metadata = $this->fetchMetadata($linkPreview->url);
         } catch (HttpClientException) {
-            $metadata = self::NO_METADATA;
+            //
         } catch (Throwable $exception) {
             report($exception);
-
-            $metadata = self::NO_METADATA;
         }
 
         $linkPreview->update([...$metadata, 'fetched_at' => now()]);
