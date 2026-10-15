@@ -35,7 +35,7 @@ final readonly class CreateCommit
             $this->notifyAboutReplies->handle($commit);
 
             if ($linkPreview instanceof LinkPreview && $linkPreview->fetched_at === null) {
-                dispatch(new UnfurlLink($linkPreview))->afterCommit();
+                dispatch(new UnfurlLink($linkPreview));
             }
 
             return $commit;
