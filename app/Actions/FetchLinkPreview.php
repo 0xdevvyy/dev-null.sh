@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Contracts\Services\DnsResolver;
 use App\Models\LinkPreview;
-use App\Services\DnsResolver;
 use Dom\HTMLDocument;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Psr7\Utils;
