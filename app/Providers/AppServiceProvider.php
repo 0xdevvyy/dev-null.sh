@@ -83,5 +83,20 @@ final class AppServiceProvider extends ServiceProvider
                 return back();
             });
         });
+
+        // Every sync costs four GitHub API requests, out of a shared hourly budget...
+        RateLimiter::for('profile-syncs', function (Request $request): Limit {
+            $user = $request->user();
+            assert($user instanceof User);
+
+            return Limit::perMinute(1)->by($user->id)->response(function (): RedirectResponse {
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => __('You just synced. Try again in a minute.'),
+                ]);
+
+                return back();
+            });
+        });
     }
 }

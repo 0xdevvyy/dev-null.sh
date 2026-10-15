@@ -28,6 +28,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read int|null $preferred_lane
  * @property-read string|null $pinned_commit_id
  * @property-read string|null $remember_token
+ * @property-read CarbonInterface|null $github_synced_at
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
  * @property-read Collection<int, Commit> $commits
@@ -46,6 +47,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
     'remember_token',
     'preferred_lane',
     'pinned_commit_id',
+    'github_synced_at',
 ])]
 final class User extends Authenticatable
 {
@@ -73,6 +75,7 @@ final class User extends Authenticatable
             'preferred_lane' => 'integer',
             'pinned_commit_id' => 'string',
             'remember_token' => 'string',
+            'github_synced_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

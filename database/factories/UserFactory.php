@@ -32,6 +32,7 @@ final class UserFactory extends Factory
             'company' => fake()->company(),
             'preferred_lane' => null,
             'remember_token' => Str::random(10),
+            'github_synced_at' => null,
         ];
     }
 

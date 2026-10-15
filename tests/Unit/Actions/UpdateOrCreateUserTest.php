@@ -103,3 +103,11 @@ it('keeps http websites as they are', function (): void {
 
     expect($user->website)->toBe('http://example.com');
 });
+
+it('records when the profile was synced from github', function (): void {
+    $action = resolve(UpdateOrCreateUser::class);
+
+    $user = $action->handle(GitHubUser::fake([]));
+
+    expect($user->refresh()->github_synced_at->toDateTimeString())->toBe(now()->toDateTimeString());
+});

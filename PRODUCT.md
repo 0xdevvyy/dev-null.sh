@@ -16,11 +16,11 @@ devnull is a social network for developers: sign in with GitHub, get a profile m
 
 ## Positioning
 
-Identity is GitHub. Every account is a real GitHub user, and the profile (avatar, name, username, bio, company, location, website) is mirrored from GitHub on every login and cannot be edited on devnull. A general-purpose network cannot truthfully claim that every account is a developer with a public GitHub identity.
+Identity is GitHub. Every account is a real GitHub user, and the profile (avatar, name, username, bio, company, location, website) is mirrored from GitHub on every login, or on demand with "Sync from GitHub" in settings, and cannot be edited on devnull. A general-purpose network cannot truthfully claim that every account is a developer with a public GitHub identity.
 
 ## Operating Context
 
-- Sign-in is GitHub OAuth only. Profile changes happen on GitHub ("Edit on GitHub"), then sync at next login.
+- Sign-in is GitHub OAuth only. Profile changes happen on GitHub ("Edit on GitHub"), then sync at next login or with "Sync from GitHub" (once a minute).
 - Everything except the landing page requires login.
 - Profile links (`/@{username}`) and links to approved commits (`/@{username}/commits/{id}`) unfurl with a link preview (the author and their bio or counts, or the commit body and reply count) for guests and crawlers; a guest opening one sees the landing page, and the profile or commit itself stays behind login. Pending and rejected commits are a 404 for guests.
 - Two logs: **Following** (my commits plus people I follow) and **Everyone** (all commits), newest first, infinite scroll.
