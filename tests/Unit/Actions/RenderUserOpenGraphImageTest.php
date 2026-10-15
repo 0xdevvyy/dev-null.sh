@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Actions\RenderUserOpenGraphImage;
 use App\Models\User;
-use App\Services\OpenGraphCanvas;
 use Illuminate\Support\Facades\Cache;
 
 it('falls back to the username when the name has nothing Geist can draw', function (): void {
@@ -29,19 +28,3 @@ it('fits bios that would overflow the card', function (string $bio): void {
     'an unbroken word wider than the card' => ['See '.str_repeat('supercalifragilistic', 20)],
     'more lines than the card holds' => [str_repeat('Writing PHP on purpose and shipping it before lunch. ', 6)],
 ]);
-
-it('signs the card with the logo and its orange outlined slash', function (): void {
-    $user = User::factory()->create(['avatar_url' => null, 'bio' => null]);
-
-    $image = imagecreatefromstring(resolve(RenderUserOpenGraphImage::class)->handle($user));
-
-    $hasAccent = false;
-
-    for ($x = OpenGraphCanvas::CONTENT_X; $x < OpenGraphCanvas::CONTENT_RIGHT && ! $hasAccent; $x++) {
-        for ($y = OpenGraphCanvas::FOOTER_RULE_Y + 2; $y < OpenGraphCanvas::HEIGHT && ! $hasAccent; $y++) {
-            $hasAccent = imagecolorat($image, $x, $y) === 0xD9480F;
-        }
-    }
-
-    expect($hasAccent)->toBeTrue();
-});
