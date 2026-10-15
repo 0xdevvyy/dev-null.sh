@@ -195,6 +195,11 @@
     a {
         text-underline-offset: 0.2em;
     }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
 }
 
 ::view-transition-old(root),
