@@ -216,3 +216,17 @@ it('only shows top-level commits with their reply counts', function (): void {
             ->where('commits.data.0.body', 'Root')
             ->where('commits.data.0.replies_count', 2));
 });
+
+it('only suggests top-level commits', function (): void {
+    $user = User::factory()->create();
+    $parent = Commit::factory()->create(['body' => 'Root commit', 'created_at' => now()->subMinute()]);
+    Commit::factory()->for($parent, 'parent')->create(['body' => 'A reply']);
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('suggestions', 1)
+            ->where('suggestions.0.body', 'Root commit'));
+});
