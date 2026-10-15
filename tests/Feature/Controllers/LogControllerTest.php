@@ -6,6 +6,7 @@ use App\Enums\Log;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Commit;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 it('renders own commits and commits of followed users newest first', function (): void {
     $user = User::factory()->create();
@@ -65,6 +66,26 @@ it('paginates the log', function (Log $log): void {
             ->has('commits.data', 20)
             ->whereNot('commits.next_cursor', null));
 })->with(Log::cases());
+
+it('does not count the authenticated user relations when reloading only commits', function (): void {
+    $user = User::factory()->has(Commit::factory())->create();
+
+    $response = $this->actingAs($user)
+        ->get('/log/everyone');
+
+    $response->assertOk()
+        ->assertInertia(function ($page): void {
+            $page->where('auth.user.commits_count', 1);
+
+            DB::enableQueryLog();
+
+            $page->reloadOnly('commits', fn ($reload) => $reload->missing('auth'));
+        });
+
+    expect(array_column(DB::getQueryLog(), 'query'))
+        ->not->toBeEmpty()
+        ->each->not->toContain('count(*)');
+});
 
 it('returns not found for unknown logs', function (): void {
     $response = $this->actingAs(User::factory()->create())

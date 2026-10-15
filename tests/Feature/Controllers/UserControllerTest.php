@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Commit;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 it('renders a user profile', function (): void {
     $user = User::factory()->create(['username' => 'octocat']);
@@ -34,6 +35,29 @@ it('renders a user profile', function (): void {
             ->where('commits.data.0.body', 'Newer')
             ->where('commits.data.0.user.username', 'octocat')
             ->where('commits.data.1.body', 'Older'));
+});
+
+it('does not count the user relations or activity when reloading only commits', function (): void {
+    $user = User::factory()->has(Commit::factory())->create(['username' => 'octocat']);
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/@octocat');
+
+    $response->assertOk()
+        ->assertInertia(function ($page): void {
+            $page->where('user.commits_count', 1);
+
+            DB::enableQueryLog();
+
+            $page->reloadOnly('commits', fn ($reload) => $reload
+                ->missing('user')
+                ->missing('isFollowing')
+                ->missing('activity'));
+        });
+
+    expect(array_column(DB::getQueryLog(), 'query'))
+        ->not->toBeEmpty()
+        ->each(fn ($query) => $query->not->toContain('count(*)')->not->toContain('exists'));
 });
 
 it('renders the user commit activity for the last year', function (): void {
