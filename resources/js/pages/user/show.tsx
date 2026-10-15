@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowUpRight,
     Building2,
@@ -81,6 +81,7 @@ export default function Show({
                                 }
                                 as="button"
                                 preserveScroll
+                                onSuccess={() => router.flushAll()}
                                 aria-label={
                                     isFollowing
                                         ? `Unfollow @${user.username}`

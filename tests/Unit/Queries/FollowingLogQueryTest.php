@@ -25,6 +25,20 @@ it('includes own commits and commits of followed users newest first', function (
         ->and($commits->first()->relationLoaded('user'))->toBeTrue();
 });
 
+it('orders commits by creation date rather than insertion order', function (): void {
+    $user = User::factory()->create();
+    $followed = User::factory()->create();
+
+    $user->following()->attach($followed);
+
+    $newer = Commit::factory()->for($user)->create();
+    $older = Commit::factory()->for($followed)->create(['created_at' => now()->subMinute()]);
+
+    $commits = resolve(FollowingLogQuery::class)->builder($user)->get();
+
+    expect($commits->modelKeys())->toBe([$newer->id, $older->id]);
+});
+
 it('resolves followed users in a subquery instead of loading their ids', function (): void {
     $user = User::factory()->create();
 
