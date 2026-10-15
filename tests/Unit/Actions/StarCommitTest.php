@@ -36,10 +36,3 @@ it('may star their own pending commit', function (): void {
 
     expect($user->hasStarred($commit))->toBeTrue();
 });
-
-it('may not star a commit that is not visible', function (): void {
-    $user = User::factory()->create();
-    $commit = Commit::factory()->rejected()->create();
-
-    resolve(StarCommit::class)->handle($user, $commit);
-})->throws(InvalidArgumentException::class, 'Commits can only be starred when they are visible.');

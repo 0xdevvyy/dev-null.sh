@@ -15,10 +15,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property-read string $id
  * @property-read string $user_id
+ * @property-read string|null $parent_id
  * @property-read string $body
  * @property-read CommitStatus $status
  * @property-read CarbonInterface $created_at
@@ -27,6 +29,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read bool $starred
  * @property-read User $user
  * @property-read Collection<int, User> $stars
+ * @property-read Commit|null $parent
+ * @property-read Collection<int, Commit> $replies
+ * @property-read int $replies_count
  */
 #[UseEloquentBuilder(CommitBuilder::class)]
 final class Commit extends Model
@@ -44,6 +49,7 @@ final class Commit extends Model
         return [
             'id' => 'string',
             'user_id' => 'string',
+            'parent_id' => 'string',
             'body' => 'string',
             'status' => CommitStatus::class,
             'created_at' => 'datetime',
@@ -73,5 +79,43 @@ final class Commit extends Model
     public function isVisibleTo(User $user): bool
     {
         return $this->status === CommitStatus::Approved || $this->user_id === $user->id;
+    }
+
+    /**
+     * @return BelongsTo<Commit, $this>
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /**
+     * @return HasMany<Commit, $this>
+     */
+    public function replies(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
+     * Loads what anyone may see around the commit: its author, its approved replies, and its parent only when approved.
+     */
+    public function loadPublicPreview(): self
+    {
+        return $this->loadCount(['replies' => fn (CommitBuilder $query): CommitBuilder => $query->approved()])
+            ->load(['user', 'parent' => fn (BelongsTo $query): BelongsTo => $query->where('status', CommitStatus::Approved)->with('user')]);
+    }
+
+    /**
+     * Changes whenever anything drawn on the commit's link preview image may have changed.
+     */
+    public function openGraphImageVersion(): string
+    {
+        return hash('xxh3', implode(':', [
+            $this->updated_at->getTimestamp(),
+            $this->replies_count,
+            $this->user->updated_at->getTimestamp(),
+            $this->parent?->user->username,
+        ]));
     }
 }

@@ -40,9 +40,9 @@ it('may star their own pending commit', function (): void {
     expect($user->hasStarred($commit))->toBeTrue();
 });
 
-it('may not star a commit that is not visible', function (): void {
+it('may not star a commit that is not visible', function (string $state): void {
     $user = User::factory()->create();
-    $commit = Commit::factory()->pending()->create();
+    $commit = Commit::factory()->{$state}()->create();
 
     $this->actingAs($user)
         ->fromRoute('log.show', Log::Everyone)
@@ -50,7 +50,7 @@ it('may not star a commit that is not visible', function (): void {
         ->assertForbidden();
 
     expect($user->hasStarred($commit))->toBeFalse();
-});
+})->with(['pending', 'rejected']);
 
 it('may unstar a commit', function (): void {
     $user = User::factory()->create();

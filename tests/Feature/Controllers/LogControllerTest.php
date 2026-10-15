@@ -35,6 +35,24 @@ it('renders own commits and commits of followed users newest first', function ()
             ->where('commits.data.1.body', 'Mine'));
 });
 
+it('renders each author with their effective lane', function (): void {
+    $user = User::factory()->create();
+    $chosen = User::factory()->create(['preferred_lane' => 5]);
+    $automatic = User::factory()->create(['id' => 'edfd235d-6874-4a82-a1ba-4f40c5f40510']);
+
+    Commit::factory()->for($chosen)->create(['created_at' => now()->subMinute()]);
+    Commit::factory()->for($automatic)->create();
+
+    $response = $this->actingAs($user)
+        ->get('/log/everyone');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('commits.data.0.user.lane', 2)
+            ->where('commits.data.1.user.lane', 5)
+            ->missing('commits.data.1.user.preferred_lane'));
+});
+
 it('renders commits of everyone newest first', function (): void {
     $user = User::factory()->create();
 
@@ -84,13 +102,12 @@ it('does not count the authenticated user relations when reloading only commits'
             $page->reloadOnly('commits', fn ($reload) => $reload->missing('auth'));
         });
 
-    $queries = array_column(DB::getQueryLog(), 'query');
-
-    expect($queries)->not->toBeEmpty()
-        ->and(collect($queries)->filter(
-            fn (string $query): bool => str_contains($query, 'from "follows"')
-                || str_starts_with($query, 'select count(*)'),
-        ))->toBeEmpty();
+    expect(collect(DB::getQueryLog())
+        ->pluck('query')
+        ->reject(fn (string $query): bool => str_starts_with($query, 'select "commits".*'))
+        ->all())
+        ->not->toBeEmpty()
+        ->each->not->toContain('count(*)');
 });
 
 it('returns not found for unknown logs', function (): void {
@@ -202,4 +219,34 @@ it('only suggests approved commits', function (): void {
         ->assertInertia(fn ($page) => $page
             ->has('suggestions', 1)
             ->where('suggestions.0.body', 'Approved'));
+});
+
+it('only shows top-level commits with their reply counts', function (): void {
+    $user = User::factory()->create();
+    $parent = Commit::factory()->create(['body' => 'Root']);
+    Commit::factory()->for($parent, 'parent')->count(2)->create();
+    Commit::factory()->for($parent, 'parent')->pending()->create();
+
+    $response = $this->actingAs($user)
+        ->get('/log/everyone');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('commits.data', 1)
+            ->where('commits.data.0.body', 'Root')
+            ->where('commits.data.0.replies_count', 2));
+});
+
+it('only suggests top-level commits', function (): void {
+    $user = User::factory()->create();
+    $parent = Commit::factory()->create(['body' => 'Root commit', 'created_at' => now()->subMinute()]);
+    Commit::factory()->for($parent, 'parent')->create(['body' => 'A reply']);
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('suggestions', 1)
+            ->where('suggestions.0.body', 'Root commit'));
 });

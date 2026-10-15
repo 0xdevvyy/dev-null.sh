@@ -17,6 +17,7 @@ test('to array', function (): void {
             'created_at',
             'updated_at',
             'status',
+            'parent_id',
         ]);
 });
 
@@ -56,4 +57,23 @@ it('deletes stars with the commit', function (): void {
     $commit->delete();
 
     expect($user->starredCommits()->count())->toBe(0);
+});
+
+it('may reply to another commit', function (): void {
+    $parent = Commit::factory()->create();
+    $reply = Commit::factory()->for($parent, 'parent')->create();
+
+    expect($reply->parent->is($parent))->toBeTrue()
+        ->and($parent->replies->sole()->is($reply))->toBeTrue();
+});
+
+it('deletes replies along with their parent', function (): void {
+    $parent = Commit::factory()->create();
+    $reply = Commit::factory()->for($parent, 'parent')->create();
+    $nested = Commit::factory()->for($reply, 'parent')->create();
+
+    $parent->delete();
+
+    expect($reply->fresh())->toBeNull()
+        ->and($nested->fresh())->toBeNull();
 });

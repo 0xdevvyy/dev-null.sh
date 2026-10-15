@@ -5,6 +5,7 @@ export type CommitStatus = 'pending' | 'approved' | 'rejected';
 export type Commit = {
     id: string;
     user_id: string;
+    parent_id: string | null;
     body: string;
     status: CommitStatus;
     created_at: string;
@@ -12,6 +13,8 @@ export type Commit = {
     stars_count: number;
     starred: boolean;
     user: User;
+    replies_count?: number;
+    parent?: (Omit<Commit, 'parent'> & { user: User }) | null;
 };
 
 export type CursorPaginated<T> = {
