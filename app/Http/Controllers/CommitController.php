@@ -21,6 +21,11 @@ final readonly class CommitController
     {
         $commit = $action->handle($user, $request->string('body')->value());
 
+        Inertia::flash('committed', [
+            'id' => $commit->id,
+            'body' => $commit->body,
+        ]);
+
         if ($commit->status === CommitStatus::Pending) {
             Inertia::flash('toast', [
                 'type' => 'info',

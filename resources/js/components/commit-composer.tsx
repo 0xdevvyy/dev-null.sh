@@ -33,8 +33,16 @@ export function CommitComposer() {
         <Form
             {...CommitController.store.form()}
             options={{ preserveScroll: true }}
-            resetOnSuccess
-            onSuccess={() => setBody('')}
+            onSuccess={(page) => {
+                if (!page.flash.committed) {
+                    return;
+                }
+
+                setBody('');
+                requestAnimationFrame(() =>
+                    document.getElementById('body')?.focus(),
+                );
+            }}
             className="flex"
         >
             {({ processing, errors }) => (
