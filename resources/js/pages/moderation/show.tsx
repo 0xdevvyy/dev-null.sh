@@ -5,44 +5,63 @@ import CommitApprovalController from '@/actions/App/Http/Controllers/CommitAppro
 import CommitRejectionController from '@/actions/App/Http/Controllers/CommitRejectionController';
 import { CommitFeed, EmptyFeed } from '@/components/commit-feed';
 import { Button } from '@/components/ui/button';
+import { focusCommit } from '@/hooks/use-keyboard-shortcuts';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import type { Commit, CursorPaginated } from '@/types';
 
-function ModerationActions({ commit }: { commit: Commit }) {
-    const [processing, setProcessing] = useState(false);
+type ModerationRoute =
+    | typeof CommitApprovalController.store
+    | typeof CommitRejectionController.store;
 
-    const moderate = (
-        route:
-            | typeof CommitApprovalController.store
-            | typeof CommitRejectionController.store,
-    ) =>
-        router.visit(route(commit), {
-            preserveScroll: true,
-            reset: ['commits'],
-            onStart: () => setProcessing(true),
-            onFinish: () => setProcessing(false),
-        });
+function Keycap({ label, className }: { label: string; className?: string }) {
+    return (
+        <kbd
+            aria-hidden
+            className={cn(
+                '-mr-1 hidden min-w-5 rounded border border-b-2 px-1 text-center font-mono text-xs leading-4 sm:inline-block',
+                className,
+            )}
+        >
+            {label}
+        </kbd>
+    );
+}
 
+function ModerationActions({
+    isDisabled,
+    onModerate,
+}: {
+    isDisabled: boolean;
+    onModerate: (route: ModerationRoute) => void;
+}) {
     return (
         <div className="mt-3 flex gap-2">
             <Button
                 size="sm"
-                disabled={processing}
-                onClick={() => moderate(CommitApprovalController.store)}
+                disabled={isDisabled}
+                onClick={() => onModerate(CommitApprovalController.store)}
+                aria-keyshortcuts="a"
                 data-test="approve-commit-button"
             >
                 <Check />
                 Approve
+                <Keycap
+                    label="a"
+                    className="border-primary-foreground/30 bg-primary-foreground/15"
+                />
             </Button>
             <Button
                 variant="outline"
                 size="sm"
-                disabled={processing}
-                onClick={() => moderate(CommitRejectionController.store)}
+                disabled={isDisabled}
+                onClick={() => onModerate(CommitRejectionController.store)}
+                aria-keyshortcuts="x"
                 data-test="reject-commit-button"
             >
                 <X />
                 Reject
+                <Keycap label="x" className="bg-muted" />
             </Button>
         </div>
     );
@@ -53,6 +72,33 @@ export default function Show({
 }: {
     commits: CursorPaginated<Commit>;
 }) {
+    const [isModerating, setIsModerating] = useState(false);
+
+    const moderate = (commit: Commit, route: ModerationRoute) => {
+        const index = commits.data.findIndex(({ id }) => id === commit.id);
+        const neighbour = commits.data[index + 1] ?? commits.data[index - 1];
+
+        setIsModerating(true);
+
+        router.visit(route(commit), {
+            preserveScroll: true,
+            reset: ['commits'],
+            onSuccess: () =>
+                requestAnimationFrame(() => {
+                    const row = neighbour
+                        ? document.querySelector<HTMLElement>(
+                              `[data-commit="${neighbour.id}"]`,
+                          )
+                        : null;
+
+                    if (row) {
+                        focusCommit(row);
+                    }
+                }),
+            onFinish: () => setIsModerating(false),
+        });
+    };
+
     return (
         <>
             <Head title="Moderation" />
@@ -68,7 +114,12 @@ export default function Show({
                 commits={commits}
                 firstLane="var(--rail)"
                 end="That's every pending commit."
-                actions={(commit) => <ModerationActions commit={commit} />}
+                actions={(commit) => (
+                    <ModerationActions
+                        isDisabled={isModerating}
+                        onModerate={(route) => moderate(commit, route)}
+                    />
+                )}
                 empty={
                     <EmptyFeed command="nothing to commit, working tree clean">
                         No commits are waiting for review.

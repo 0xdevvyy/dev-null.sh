@@ -72,7 +72,7 @@ export function CommitCard({
                     : 'grid-rows-[1fr]',
             )}
             tabIndex={-1}
-            data-commit
+            data-commit={commit.id}
             data-test="commit"
         >
             <div className="flex min-h-0 overflow-hidden">
