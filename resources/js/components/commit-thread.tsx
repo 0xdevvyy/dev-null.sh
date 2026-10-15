@@ -12,7 +12,7 @@ import CommitReplyController from '@/actions/App/Http/Controllers/CommitReplyCon
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
-import { UserHoverCard } from '@/components/user-hover-card';
+import { UserPreview } from '@/components/user-preview';
 import { useNow } from '@/hooks/use-now';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { show } from '@/routes/user';
@@ -203,7 +203,7 @@ function ReplyItem({
     return (
         <article className="group/reply pt-2.5" data-test="reply">
             <div className="flex gap-2 sm:gap-2.5">
-                <UserHoverCard user={reply.user} className="shrink-0">
+                <UserPreview user={reply.user} className="shrink-0">
                     <Link
                         href={show(reply.user)}
                         className="block rounded-full"
@@ -213,11 +213,11 @@ function ReplyItem({
                             className="size-6 sm:size-7"
                         />
                     </Link>
-                </UserHoverCard>
+                </UserPreview>
 
                 <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-1.5 text-sm">
-                        <UserHoverCard
+                        <UserPreview
                             user={reply.user}
                             className="flex min-w-0 items-baseline gap-1.5"
                         >
@@ -234,7 +234,7 @@ function ReplyItem({
                             >
                                 @{reply.user.username}
                             </Link>
-                        </UserHoverCard>
+                        </UserPreview>
                         <span aria-hidden className="text-muted-foreground">
                             ·
                         </span>
