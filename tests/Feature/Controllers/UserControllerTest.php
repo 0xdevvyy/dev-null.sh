@@ -36,6 +36,27 @@ it('renders a user profile', function (): void {
             ->where('posts.data.1.body', 'Older'));
 });
 
+it('renders the user commit activity for the last year', function (): void {
+    $this->travelTo(now()->setDate(2026, 10, 15)->setTime(12, 0));
+
+    $user = User::factory()->create(['username' => 'octocat']);
+
+    Post::factory()->for($user)->count(2)->create();
+    Post::factory()->for($user)->create(['created_at' => now()->subDays(3)]);
+    Post::factory()->for($user)->create(['created_at' => now()->subYears(2)]);
+    Post::factory()->create();
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/@octocat');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('activity', 369)
+            ->where('activity.0', ['date' => '2025-10-12', 'count' => 0])
+            ->where('activity.365', ['date' => '2026-10-12', 'count' => 1])
+            ->where('activity.368', ['date' => '2026-10-15', 'count' => 2]));
+});
+
 it('renders whether the viewer is not following the user', function (): void {
     $user = User::factory()->create();
 

@@ -28,6 +28,15 @@
         ],
         "createdAt": "2026-10-15T12:11:01.694Z",
         "reason": "agent decided: unchosen decision-round sketch, never shipped"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-10-15T12:16:02.254Z",
+        "reason": "agent decided: unchosen decision-round sketch, never shipped"
       }
     ]
   }

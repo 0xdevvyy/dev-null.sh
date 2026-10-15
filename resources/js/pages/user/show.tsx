@@ -8,13 +8,14 @@ import {
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import UserFollowController from '@/actions/App/Http/Controllers/UserFollowController';
+import { ActivityGraph } from '@/components/activity-graph';
 import { GitHubIcon } from '@/components/github-icon';
 import { EmptyFeed, PostFeed } from '@/components/post-feed';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import AppLayout from '@/layouts/app-layout';
 import { laneFor } from '@/lib/utils';
-import type { CursorPaginated, Post, Profile } from '@/types';
+import type { ActivityDay, CursorPaginated, Post, Profile } from '@/types';
 
 function pluralize(count: number, singular: string, plural: string) {
     return count === 1 ? singular : plural;
@@ -23,10 +24,12 @@ function pluralize(count: number, singular: string, plural: string) {
 export default function Show({
     user,
     isFollowing,
+    activity,
     posts,
 }: {
     user: Profile;
     isFollowing: boolean;
+    activity: ActivityDay[];
     posts: CursorPaginated<Post>;
 }) {
     const { auth } = usePage().props;
@@ -201,6 +204,8 @@ export default function Show({
                     ))}
                 </dl>
             </header>
+
+            <ActivityGraph activity={activity} lane={lane} />
 
             <PostFeed
                 posts={posts}

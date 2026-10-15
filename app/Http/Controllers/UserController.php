@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\DeleteUser;
 use App\Http\Requests\DeleteUserRequest;
 use App\Models\User;
+use App\Queries\UserActivityQuery;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,13 +16,14 @@ use Inertia\Response;
 
 final readonly class UserController
 {
-    public function show(#[CurrentUser] User $currentUser, User $user): Response
+    public function show(#[CurrentUser] User $currentUser, User $user, UserActivityQuery $activity): Response
     {
         $user->loadCount(['posts', 'followers', 'following']);
 
         return Inertia::render('user/show', [
             'user' => $user,
             'isFollowing' => $currentUser->isFollowing($user),
+            'activity' => $activity->get($user),
             'posts' => Inertia::scroll(fn () => $user->posts()
                 ->with('user')
                 ->latest()

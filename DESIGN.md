@@ -286,6 +286,9 @@ Centered in the feed: a mono `fatal: …` line in Muted Ink, then one or two pla
 ### Profile Header
 A 80px avatar with a 2px lane ring offset 4px from the surface, name in Title, mono handle led by the lane dot, metadata with 16px line icons, and mono counts paired with sans labels ("3 commits", "5 following").
 
+### Commit Activity
+Below the profile header: a GitHub-style 53-week grid (Sunday-first columns, Mon/Wed/Fri row labels, month labels on month change). Cells are 2px-rounded squares with 3px gaps, filled in the profile owner's lane: Muted for empty days, then the lane mixed into the surface at 32/56/80/100% for levels 1–4 relative to that user's busiest day. The total count is mono; each cell carries a "N commits on Mon D, YYYY" title. On narrow screens it scrolls horizontally, opening on the most recent week.
+
 ## Do's and Don'ts
 
 ### Do:
