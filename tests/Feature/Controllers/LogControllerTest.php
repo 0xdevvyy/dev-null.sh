@@ -140,3 +140,38 @@ it('does not suggest commits when following someone', function (): void {
     $response->assertOk()
         ->assertInertia(fn ($page) => $page->where('suggestions', []));
 });
+
+it('hides pending commits of others from the log', function (Log $log): void {
+    $user = User::factory()->create();
+    $followed = User::factory()->create();
+
+    $user->following()->attach($followed);
+
+    Commit::factory()->for($user)->pending()->create(['title' => 'Mine']);
+    Commit::factory()->for($followed)->pending()->create(['title' => 'Followed']);
+
+    $response = $this->actingAs($user)
+        ->get(route('log.show', $log));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('commits.data', 1)
+            ->where('commits.data.0.title', 'Mine')
+            ->where('commits.data.0.status', 'pending'));
+})->with(Log::cases());
+
+it('only suggests approved commits', function (): void {
+    $user = User::factory()->create();
+
+    Commit::factory()->pending()->create(['title' => 'Pending']);
+    Commit::factory()->rejected()->create(['title' => 'Rejected']);
+    Commit::factory()->create(['title' => 'Approved']);
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('suggestions', 1)
+            ->where('suggestions.0.title', 'Approved'));
+});

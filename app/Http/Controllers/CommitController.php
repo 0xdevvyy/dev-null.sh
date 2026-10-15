@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateCommit;
 use App\Actions\DeleteCommit;
+use App\Enums\CommitStatus;
 use App\Http\Requests\CreateCommitRequest;
 use App\Http\Requests\DeleteCommitRequest;
 use App\Models\Commit;
@@ -28,6 +29,13 @@ final readonly class CommitController
             'id' => $commit->id,
             'title' => $commit->title,
         ]);
+
+        if ($commit->status === CommitStatus::Pending) {
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => __('Your commit is pending review. Everyone will see it once it is approved.'),
+            ]);
+        }
 
         return back();
     }

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\CommitStatus;
+use App\Queries\CommitBuilder;
 use Carbon\CarbonInterface;
 use Database\Factories\CommitFactory;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,10 +19,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read string $user_id
  * @property-read string $title
  * @property-read string|null $description
+ * @property-read CommitStatus $status
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
  * @property-read User $user
  */
+#[UseEloquentBuilder(CommitBuilder::class)]
 final class Commit extends Model
 {
     /** @use HasFactory<CommitFactory> */
@@ -37,6 +42,7 @@ final class Commit extends Model
             'user_id' => 'string',
             'title' => 'string',
             'description' => 'string',
+            'status' => CommitStatus::class,
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

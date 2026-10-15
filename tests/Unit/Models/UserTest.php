@@ -61,3 +61,10 @@ it('has no password', function (): void {
 
     expect($user->getAuthPassword())->toBe('');
 });
+
+it('knows if it is an admin', function (): void {
+    config(['app.admins' => ['NunoMaduro']]);
+
+    expect(User::factory()->create(['username' => 'nunomaduro'])->isAdmin())->toBeTrue()
+        ->and(User::factory()->create(['username' => 'octocat'])->isAdmin())->toBeFalse();
+});

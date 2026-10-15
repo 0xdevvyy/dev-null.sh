@@ -99,3 +99,38 @@ it('may delete user account', function (): void {
 
     $this->assertGuest();
 });
+
+it('hides pending and rejected commits from other users', function (): void {
+    $user = User::factory()->create(['username' => 'octocat']);
+
+    Commit::factory()->for($user)->create(['title' => 'Approved']);
+    Commit::factory()->for($user)->pending()->create();
+    Commit::factory()->for($user)->rejected()->create();
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/@octocat');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('user.commits_count', 1)
+            ->where('activity.368.count', 1)
+            ->has('commits.data', 1)
+            ->where('commits.data.0.title', 'Approved'));
+});
+
+it('shows own pending and rejected commits', function (): void {
+    $user = User::factory()->create(['username' => 'octocat']);
+
+    Commit::factory()->for($user)->create();
+    Commit::factory()->for($user)->pending()->create();
+    Commit::factory()->for($user)->rejected()->create();
+
+    $response = $this->actingAs($user)
+        ->get('/@octocat');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('user.commits_count', 3)
+            ->where('activity.368.count', 3)
+            ->has('commits.data', 3));
+});

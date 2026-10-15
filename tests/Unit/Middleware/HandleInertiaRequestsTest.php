@@ -109,3 +109,26 @@ it('includes parent shared data', function (): void {
     // Parent Inertia middleware shares 'errors' by default
     expect($shared)->toHaveKey('errors');
 });
+
+it('shares whether the authenticated user is an admin', function (bool $isAdmin): void {
+    config(['app.admins' => $isAdmin ? ['octocat'] : []]);
+
+    $user = User::factory()->create(['username' => 'octocat']);
+
+    $middleware = new HandleInertiaRequests();
+
+    $request = Request::create('/', 'GET');
+    $request->setUserResolver(fn () => $user);
+
+    $shared = $middleware->share($request);
+
+    expect($shared['auth']['isAdmin'])->toBe($isAdmin);
+})->with([true, false]);
+
+it('shares guests as non admins', function (): void {
+    $middleware = new HandleInertiaRequests();
+
+    $shared = $middleware->share(Request::create('/', 'GET'));
+
+    expect($shared['auth']['isAdmin'])->toBeFalse();
+});

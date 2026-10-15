@@ -16,6 +16,7 @@ final readonly class SuggestedCommitsQuery
     public function get(User $user, int $limit = 3): Collection
     {
         return Commit::query()
+            ->visibleTo($user)
             ->with('user')
             ->whereNot('user_id', $user->id)
             ->latest()

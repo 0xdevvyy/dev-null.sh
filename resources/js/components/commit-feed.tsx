@@ -13,12 +13,14 @@ export function CommitFeed({
     end,
     firstLane,
     highlightedDate = null,
+    actions,
 }: {
     commits: CursorPaginated<Commit>;
     empty: ReactNode;
     end: string;
     firstLane?: string;
     highlightedDate?: string | null;
+    actions?: (commit: Commit) => ReactNode;
 }) {
     const now = useNow();
     const [highlightedAuthor, setHighlightedAuthor] = useState<string | null>(
@@ -83,6 +85,7 @@ export function CommitFeed({
                                     commit.created_at.slice(0, 10) ===
                                         highlightedDate
                                 }
+                                actions={actions?.(commit)}
                                 onAuthorHover={(isHovering) =>
                                     setHighlightedAuthor(
                                         isHovering ? commit.user_id : null,

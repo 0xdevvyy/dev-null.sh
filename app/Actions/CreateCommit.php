@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\CommitStatus;
 use App\Models\Commit;
 use App\Models\User;
 
@@ -14,6 +15,7 @@ final readonly class CreateCommit
         return $user->commits()->create([
             'title' => $title,
             'description' => $description,
+            'status' => $user->isAdmin() ? CommitStatus::Approved : CommitStatus::Pending,
         ]);
     }
 }

@@ -14,12 +14,13 @@ final readonly class UserActivityQuery
     /**
      * @return list<array{date: string, count: int}>
      */
-    public function get(User $user): array
+    public function get(User $user, User $viewer): array
     {
         $today = CarbonImmutable::now();
         $from = $today->subWeeks(52)->startOfWeek(CarbonInterface::SUNDAY);
 
         $counts = $user->commits()
+            ->visibleTo($viewer)
             ->where('created_at', '>=', $from)
             ->selectRaw('date(created_at) as day, count(*) as aggregate')
             ->groupBy('day')
