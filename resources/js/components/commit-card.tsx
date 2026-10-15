@@ -6,6 +6,7 @@ import CommitController from '@/actions/App/Http/Controllers/CommitController';
 import { GraphRail } from '@/components/graph-rail';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
+import { UserHoverCard } from '@/components/user-hover-card';
 import { useNow } from '@/hooks/use-now';
 import {
     cn,
@@ -84,27 +85,37 @@ export function CommitCard({
                 />
 
                 <div className="flex min-w-0 flex-1 gap-3 border-b py-3 pr-4">
-                    <Link
-                        href={show(commit.user)}
-                        className="shrink-0 rounded-full"
-                        onMouseEnter={
-                            onAuthorHover && (() => onAuthorHover(true))
-                        }
-                        onMouseLeave={
-                            onAuthorHover && (() => onAuthorHover(false))
-                        }
-                    >
-                        <UserAvatar user={commit.user} className="size-10" />
-                    </Link>
+                    <UserHoverCard user={commit.user} className="shrink-0">
+                        <Link
+                            href={show(commit.user)}
+                            className="shrink-0 rounded-full"
+                            onMouseEnter={
+                                onAuthorHover && (() => onAuthorHover(true))
+                            }
+                            onMouseLeave={
+                                onAuthorHover && (() => onAuthorHover(false))
+                            }
+                        >
+                            <UserAvatar
+                                user={commit.user}
+                                className="size-10"
+                            />
+                        </Link>
+                    </UserHoverCard>
 
                     <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-1.5 text-[15px]">
-                            <Link
-                                href={show(commit.user)}
-                                className="truncate font-semibold hover:underline"
+                            <UserHoverCard
+                                user={commit.user}
+                                className="min-w-0 truncate"
                             >
-                                {commit.user.name}
-                            </Link>
+                                <Link
+                                    href={show(commit.user)}
+                                    className="truncate font-semibold hover:underline"
+                                >
+                                    {commit.user.name}
+                                </Link>
+                            </UserHoverCard>
                             <span className="truncate font-mono text-[13px] text-muted-foreground">
                                 @{commit.user.username}
                             </span>
