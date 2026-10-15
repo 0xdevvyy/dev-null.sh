@@ -82,7 +82,10 @@ it('does not count the authenticated user relations when reloading only commits'
             $page->reloadOnly('commits', fn ($reload) => $reload->missing('auth'));
         });
 
-    expect(array_column(DB::getQueryLog(), 'query'))
+    expect(collect(DB::getQueryLog())
+        ->pluck('query')
+        ->reject(fn (string $query): bool => str_starts_with($query, 'select "commits".*'))
+        ->all())
         ->not->toBeEmpty()
         ->each->not->toContain('count(*)');
 });

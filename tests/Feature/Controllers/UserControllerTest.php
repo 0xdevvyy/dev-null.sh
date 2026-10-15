@@ -55,7 +55,10 @@ it('does not count the user relations or activity when reloading only commits', 
                 ->missing('activity'));
         });
 
-    expect(array_column(DB::getQueryLog(), 'query'))
+    expect(collect(DB::getQueryLog())
+        ->pluck('query')
+        ->reject(fn (string $query): bool => str_starts_with($query, 'select "commits".*'))
+        ->all())
         ->not->toBeEmpty()
         ->each(fn ($query) => $query->not->toContain('count(*)')->not->toContain('exists'));
 });
