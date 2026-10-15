@@ -30,6 +30,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
  * @property-read Collection<int, Commit> $commits
+ * @property-read Collection<int, Commit> $starredCommits
  * @property-read Collection<int, User> $following
  * @property-read Collection<int, User> $followers
  * @property-read Collection<int, Notification> $notifications
@@ -88,6 +89,19 @@ final class User extends Authenticatable
     public function sshKeys(): HasMany
     {
         return $this->hasMany(SshKey::class);
+    }
+
+    /**
+     * @return BelongsToMany<Commit, $this>
+     */
+    public function starredCommits(): BelongsToMany
+    {
+        return $this->belongsToMany(Commit::class, 'stars')->withTimestamps();
+    }
+
+    public function hasStarred(Commit $commit): bool
+    {
+        return $this->starredCommits()->whereKey($commit->id)->exists();
     }
 
     /**
