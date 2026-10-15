@@ -25,7 +25,7 @@ import { edit } from '@/routes/user-profile';
 import type { NavItem } from '@/types';
 
 function useNavItems(): (NavItem & { isActive: boolean })[] {
-    const { auth } = usePage().props;
+    const { auth, hasUnmoderatedCommits } = usePage().props;
     const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 
     const items: NavItem[] = [
@@ -50,7 +50,7 @@ function useNavItems(): (NavItem & { isActive: boolean })[] {
                       title: 'Moderation',
                       href: ModerationController.show(),
                       icon: ShieldCheck,
-                      hasIndicator: auth.hasUnmoderatedCommits,
+                      hasIndicator: hasUnmoderatedCommits,
                   },
               ]
             : []),

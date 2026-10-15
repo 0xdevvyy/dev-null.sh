@@ -41,8 +41,8 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => fn (): ?User => $request->user()?->loadCounts(),
                 'isAdmin' => $isAdmin,
-                'hasUnmoderatedCommits' => fn (): bool => $isAdmin && Commit::query()->pending()->exists(),
             ],
+            'hasUnmoderatedCommits' => fn (): bool => $isAdmin && Commit::query()->pending()->exists(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

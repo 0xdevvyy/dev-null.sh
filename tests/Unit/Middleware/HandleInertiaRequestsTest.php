@@ -161,11 +161,11 @@ it('shares whether there are unmoderated commits for admins', function (): void 
 
     $shared = $middleware->share($request);
 
-    expect(value($shared['auth']['hasUnmoderatedCommits']))->toBeFalse();
+    expect(value($shared['hasUnmoderatedCommits']))->toBeFalse();
 
     Commit::factory()->pending()->create();
 
-    expect(value($shared['auth']['hasUnmoderatedCommits']))->toBeTrue();
+    expect(value($shared['hasUnmoderatedCommits']))->toBeTrue();
 });
 
 it('shares hasUnmoderatedCommits as false for non admins', function (): void {
@@ -180,5 +180,5 @@ it('shares hasUnmoderatedCommits as false for non admins', function (): void {
 
     $shared = $middleware->share($request);
 
-    expect(value($shared['auth']['hasUnmoderatedCommits']))->toBeFalse();
+    expect(value($shared['hasUnmoderatedCommits']))->toBeFalse();
 });
