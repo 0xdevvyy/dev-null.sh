@@ -16,6 +16,7 @@ use App\Http\Controllers\UserFollowersController;
 use App\Http\Controllers\UserFollowingController;
 use App\Http\Controllers\UserPreviewController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\UserSearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -55,6 +56,9 @@ Route::middleware('auth')->group(function (): void {
         Route::post('moderation/approve', ApproveCommitsController::class)
             ->name('moderation.approve');
     });
+
+    // User Search...
+    Route::get('search/users', [UserSearchController::class, 'index'])->name('user-search.index');
 
     // User Profile...
     Route::get('settings', fn () => to_route('user-profile.edit'));
