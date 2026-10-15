@@ -15,6 +15,7 @@ final readonly class ApproveCommits
     public function handle(array $commitIds): void
     {
         Commit::query()
+            ->pending()
             ->whereKey($commitIds)
             ->update(['status' => CommitStatus::Approved]);
     }
