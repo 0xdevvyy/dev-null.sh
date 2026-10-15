@@ -1,0 +1,104 @@
+import { Link, usePage } from '@inertiajs/react';
+import { UserAvatar } from '@/components/user-avatar';
+import { laneFor } from '@/lib/utils';
+import { show } from '@/routes/user';
+
+const rules = [
+    'Everyone here signed in with GitHub.',
+    'A commit is a title of up to 72 characters, plus an optional description.',
+    'No likes, no reposts, no algorithm. Newest first.',
+    'Profiles mirror GitHub. Edit yours there.',
+];
+
+export function AppAside() {
+    const { auth } = usePage().props;
+
+    return (
+        <aside className="sticky top-0 hidden h-svh w-80 shrink-0 flex-col gap-8 px-6 py-6 xl:flex">
+            <section aria-labelledby="aside-you">
+                <h2 id="aside-you" className="sr-only">
+                    You
+                </h2>
+                <Link
+                    href={show(auth.user)}
+                    className="group flex items-center gap-3"
+                >
+                    <UserAvatar user={auth.user} className="size-12" />
+                    <span className="min-w-0">
+                        <span className="block truncate font-semibold group-hover:underline">
+                            {auth.user.name}
+                        </span>
+                        <span className="flex items-center gap-1.5 font-mono text-sm text-muted-foreground">
+                            <span
+                                aria-hidden
+                                className="size-2 rounded-full"
+                                style={{ background: laneFor(auth.user.id) }}
+                            />
+                            @{auth.user.username}
+                        </span>
+                    </span>
+                </Link>
+                <dl className="mt-4 flex gap-4 text-sm">
+                    {[
+                        {
+                            count: auth.user.commits_count,
+                            label:
+                                auth.user.commits_count === 1
+                                    ? 'commit'
+                                    : 'commits',
+                        },
+                        {
+                            count: auth.user.following_count,
+                            label: 'following',
+                        },
+                        {
+                            count: auth.user.followers_count,
+                            label:
+                                auth.user.followers_count === 1
+                                    ? 'follower'
+                                    : 'followers',
+                        },
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className="flex flex-row-reverse gap-1.5"
+                        >
+                            <dt className="text-muted-foreground">
+                                {stat.label}
+                            </dt>
+                            <dd className="font-mono font-medium">
+                                {stat.count}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+                {auth.user.bio && (
+                    <p className="mt-3 text-sm text-pretty text-muted-foreground">
+                        {auth.user.bio}
+                    </p>
+                )}
+            </section>
+
+            <section aria-labelledby="aside-rules" className="border-t pt-6">
+                <h2 id="aside-rules" className="mb-3 text-sm font-semibold">
+                    How devnull works
+                </h2>
+                <ul className="space-y-2.5 text-sm">
+                    {rules.map((rule) => (
+                        <li key={rule} className="flex gap-2.5">
+                            <span
+                                aria-hidden
+                                className="mt-[0.45em] size-1.5 shrink-0 rounded-full bg-rail"
+                            />
+                            {rule}
+                        </li>
+                    ))}
+                </ul>
+            </section>
+
+            <p className="mt-auto text-sm text-muted-foreground">
+                Everything else goes to /dev/null.
+            </p>
+        </aside>
+    );
+}

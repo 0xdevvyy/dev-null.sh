@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { ArrowUpRight } from 'lucide-react';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -6,43 +7,64 @@ import { UserAvatar } from '@/components/user-avatar';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { show } from '@/routes/user';
-import { edit } from '@/routes/user-profile';
-import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Profile settings',
-        href: edit(),
-    },
-];
 
 export default function Edit() {
     const { auth } = usePage().props;
+
+    const fields = [
+        { label: 'name', value: auth.user.name },
+        { label: 'username', value: `@${auth.user.username}` },
+        { label: 'bio', value: auth.user.bio },
+        { label: 'company', value: auth.user.company },
+        { label: 'location', value: auth.user.location },
+        { label: 'website', value: auth.user.website },
+    ];
 
     return (
         <>
             <Head title="Profile settings" />
 
-            <h1 className="sr-only">Profile settings</h1>
-
-            <div className="space-y-6">
+            <section className="px-4 py-6 sm:px-6">
                 <Heading
-                    variant="small"
                     title="Profile information"
-                    description="Your profile is synced from GitHub every time you sign in"
+                    description="Mirrored from GitHub every time you sign in. To change any of it, change it on GitHub, then sign in again."
                 />
 
                 <div className="flex items-center gap-4">
-                    <UserAvatar user={auth.user} className="size-16" />
-                    <div>
-                        <p className="font-medium">{auth.user.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                    <UserAvatar user={auth.user} className="size-14" />
+                    <div className="min-w-0">
+                        <p className="truncate font-semibold">
+                            {auth.user.name}
+                        </p>
+                        <p className="truncate font-mono text-sm text-muted-foreground">
                             @{auth.user.username}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                <dl className="mt-5 divide-y rounded-lg border text-sm">
+                    {fields.map((field) => (
+                        <div
+                            key={field.label}
+                            className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 px-4 py-2.5"
+                        >
+                            <dt className="font-mono text-[13px] text-muted-foreground">
+                                {field.label}
+                            </dt>
+                            <dd
+                                className={
+                                    field.value
+                                        ? 'break-words'
+                                        : 'font-mono text-[13px] text-muted-foreground'
+                                }
+                            >
+                                {field.value ?? 'null'}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+
+                <div className="mt-5 flex flex-wrap gap-2">
                     <Button asChild>
                         <a
                             href="https://github.com/settings/profile"
@@ -50,17 +72,18 @@ export default function Edit() {
                             rel="noopener noreferrer"
                         >
                             Edit on GitHub
+                            <ArrowUpRight />
                         </a>
                     </Button>
                     <Button variant="outline" asChild>
                         <Link href={show(auth.user)}>View profile</Link>
                     </Button>
                 </div>
-            </div>
+            </section>
 
             <DeleteUser />
         </>
     );
 }
 
-Edit.layout = [[AppLayout, { breadcrumbs }], SettingsLayout];
+Edit.layout = [AppLayout, SettingsLayout];

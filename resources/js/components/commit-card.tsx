@@ -1,85 +1,176 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import CommitController from '@/actions/App/Http/Controllers/CommitController';
+import { GraphRail } from '@/components/graph-rail';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
-import { formatRelativeTime } from '@/lib/utils';
+import {
+    cn,
+    formatRelativeTime,
+    isWithinSeconds,
+    laneFor,
+    shortHash,
+} from '@/lib/utils';
 import { show } from '@/routes/user';
 import type { Commit } from '@/types';
 
-export function CommitCard({ commit }: { commit: Commit }) {
+export function CommitCard({
+    commit,
+    previousLane,
+}: {
+    commit: Commit;
+    previousLane?: string;
+}) {
     const { auth } = usePage().props;
+    const [deletion, setDeletion] = useState<
+        'idle' | 'confirming' | 'deleting'
+    >('idle');
 
-    // UUIDv7 starts with a timestamp, so the random tail makes a better short hash.
-    const hash = commit.id.replaceAll('-', '').slice(-7);
+    const isOwn = commit.user_id === auth.user.id;
+    const hash = shortHash(commit.id);
+
+    const deleteCommit = () => {
+        setDeletion('deleting');
+
+        const prefersReducedMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        ).matches;
+
+        window.setTimeout(
+            () =>
+                router.visit(CommitController.destroy(commit), {
+                    preserveScroll: true,
+                    onError: () => setDeletion('idle'),
+                }),
+            prefersReducedMotion ? 0 : 700,
+        );
+    };
 
     return (
         <article
-            className="flex gap-3 border-b border-sidebar-border/70 px-4 py-4 dark:border-sidebar-border"
+            className={cn(
+                'group grid transition-[grid-template-rows,opacity] duration-300 ease-out',
+                deletion === 'deleting'
+                    ? 'grid-rows-[0fr] opacity-0 delay-400'
+                    : 'grid-rows-[1fr]',
+            )}
             data-test="commit"
         >
-            <Link href={show(commit.user)} className="shrink-0">
-                <UserAvatar user={commit.user} className="size-10" />
-            </Link>
+            <div className="flex min-h-0 overflow-hidden">
+                <GraphRail
+                    lane={laneFor(commit.user_id)}
+                    previousLane={previousLane}
+                    isFresh={isOwn && isWithinSeconds(commit.created_at, 15)}
+                />
 
-            <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1 text-sm">
+                <div className="flex min-w-0 flex-1 gap-3 border-b py-3 pr-4">
                     <Link
                         href={show(commit.user)}
-                        className="truncate font-semibold hover:underline"
+                        className="shrink-0 rounded-full"
                     >
-                        {commit.user.name}
+                        <UserAvatar user={commit.user} className="size-10" />
                     </Link>
-                    <span className="truncate text-muted-foreground">
-                        @{commit.user.username}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                    <code className="shrink-0 font-mono text-xs text-muted-foreground">
-                        {hash}
-                    </code>
-                    <span className="text-muted-foreground">·</span>
-                    <time
-                        dateTime={commit.created_at}
-                        title={new Date(commit.created_at).toLocaleString()}
-                        className="shrink-0 text-muted-foreground"
-                    >
-                        {formatRelativeTime(commit.created_at)}
-                    </time>
 
-                    {commit.user_id === auth.user.id && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="ml-auto size-7 text-muted-foreground hover:text-destructive"
-                            asChild
-                        >
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-1.5 text-[15px]">
                             <Link
-                                href={CommitController.destroy(commit)}
-                                as="button"
-                                preserveScroll
-                                onBefore={() =>
-                                    confirm(
-                                        'Are you sure you want to delete this commit?',
-                                    )
-                                }
-                                aria-label="Delete commit"
-                                data-test="delete-commit-button"
+                                href={show(commit.user)}
+                                className="truncate font-semibold hover:underline"
                             >
-                                <Trash2 />
+                                {commit.user.name}
                             </Link>
-                        </Button>
-                    )}
+                            <span className="truncate font-mono text-[13px] text-muted-foreground">
+                                @{commit.user.username}
+                            </span>
+                            <span aria-hidden className="text-muted-foreground">
+                                ·
+                            </span>
+                            <time
+                                dateTime={commit.created_at}
+                                title={new Date(
+                                    commit.created_at,
+                                ).toLocaleString()}
+                                className="shrink-0 font-mono text-[13px] text-muted-foreground"
+                            >
+                                {formatRelativeTime(commit.created_at)}
+                            </time>
+
+                            <span
+                                className="ml-auto hidden shrink-0 font-mono text-[13px] text-muted-foreground sm:inline"
+                                title={`Commit ${commit.id}`}
+                            >
+                                {hash}
+                            </span>
+
+                            {isOwn && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDeletion('confirming')}
+                                    aria-label="Delete commit"
+                                    title="Delete commit"
+                                    className="-my-1 ml-auto shrink-0 self-center rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 sm:ml-1 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                                    data-test="delete-commit-button"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        {deletion === 'deleting' ? (
+                            <p
+                                className="mt-0.5 font-mono text-sm text-muted-foreground"
+                                role="status"
+                            >
+                                rm {hash} → /dev/null
+                            </p>
+                        ) : (
+                            <>
+                                <p className="mt-0.5 text-[15px] leading-snug font-medium break-words">
+                                    {commit.title}
+                                </p>
+                                {commit.description && (
+                                    <p className="mt-1 text-[15px] leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+                                        {commit.description}
+                                    </p>
+                                )}
+                            </>
+                        )}
+
+                        {deletion === 'confirming' && (
+                            <div
+                                role="group"
+                                aria-label="Confirm delete"
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Escape') {
+                                        setDeletion('idle');
+                                    }
+                                }}
+                                className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-destructive/8 px-3 py-2 text-sm"
+                            >
+                                <span className="mr-auto">
+                                    Delete this commit? There's no undo.
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    autoFocus
+                                    onClick={() => setDeletion('idle')}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={deleteCommit}
+                                    data-test="confirm-delete-commit-button"
+                                >
+                                    Delete
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-
-                <p className="mt-1 text-sm font-medium break-words">
-                    {commit.title}
-                </p>
-
-                {commit.description && (
-                    <p className="mt-1 text-sm break-words whitespace-pre-wrap text-muted-foreground">
-                        {commit.description}
-                    </p>
-                )}
             </div>
         </article>
     );

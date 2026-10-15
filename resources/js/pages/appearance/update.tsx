@@ -3,33 +3,21 @@ import AppearanceTabs from '@/components/appearance-tabs';
 import Heading from '@/components/heading';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { edit as editAppearance } from '@/routes/appearance';
-import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Appearance settings',
-        href: editAppearance(),
-    },
-];
 
 export default function Update() {
     return (
         <>
             <Head title="Appearance settings" />
 
-            <h1 className="sr-only">Appearance settings</h1>
-
-            <div className="space-y-6">
+            <section className="px-4 py-6 sm:px-6">
                 <Heading
-                    variant="small"
-                    title="Appearance settings"
-                    description="Update your account's appearance settings"
+                    title="Theme"
+                    description="System follows your operating system, light by day and dark by night if that's how you have it set."
                 />
                 <AppearanceTabs />
-            </div>
+            </section>
         </>
     );
 }
 
-Update.layout = [[AppLayout, { breadcrumbs }], SettingsLayout];
+Update.layout = [AppLayout, SettingsLayout];

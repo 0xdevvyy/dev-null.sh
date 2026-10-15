@@ -14,68 +14,52 @@ import {
 
 export default function DeleteUser() {
     return (
-        <div className="space-y-6">
+        <section className="px-4 py-6 sm:px-6">
             <Heading
-                variant="small"
                 title="Delete account"
-                description="Delete your account and all of your commits"
+                description="Removes your devnull account, every commit you've made, and everyone you follow. Your GitHub account is not touched."
             />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
-                    <p className="text-sm">
-                        Please proceed with caution, this cannot be undone.
-                    </p>
-                </div>
 
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button
-                            variant="destructive"
-                            data-test="delete-user-button"
-                        >
-                            Delete account
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogTitle>
-                            Are you sure you want to delete your account?
-                        </DialogTitle>
-                        <DialogDescription>
-                            Once your account is deleted, all of your commits
-                            and follows will also be permanently deleted.
-                        </DialogDescription>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button
+                        variant="outline"
+                        className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        data-test="delete-user-button"
+                    >
+                        Delete account
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogTitle>Delete your account?</DialogTitle>
+                    <DialogDescription>
+                        Your profile, commits, and follows go to /dev/null. This
+                        can't be undone. You can sign in with GitHub again
+                        later, but you'll start from zero.
+                    </DialogDescription>
 
-                        <Form
-                            {...UserController.destroy.form()}
-                            className="space-y-6"
-                        >
-                            {({ processing }) => (
-                                <DialogFooter className="gap-2">
-                                    <DialogClose asChild>
-                                        <Button variant="secondary">
-                                            Cancel
-                                        </Button>
-                                    </DialogClose>
-
-                                    <Button
-                                        variant="destructive"
-                                        disabled={processing}
-                                        asChild
-                                    >
-                                        <button
-                                            type="submit"
-                                            data-test="confirm-delete-user-button"
-                                        >
-                                            Delete account
-                                        </button>
+                    <Form {...UserController.destroy.form()}>
+                        {({ processing }) => (
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button variant="outline">
+                                        Keep my account
                                     </Button>
-                                </DialogFooter>
-                            )}
-                        </Form>
-                    </DialogContent>
-                </Dialog>
-            </div>
-        </div>
+                                </DialogClose>
+
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    disabled={processing}
+                                    data-test="confirm-delete-user-button"
+                                >
+                                    Delete account
+                                </Button>
+                            </DialogFooter>
+                        )}
+                    </Form>
+                </DialogContent>
+            </Dialog>
+        </section>
     );
 }

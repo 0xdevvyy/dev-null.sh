@@ -1,15 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 import LogController from '@/actions/App/Http/Controllers/LogController';
 import { CommitComposer } from '@/components/commit-composer';
-import { CommitFeed } from '@/components/commit-feed';
+import { CommitFeed, EmptyFeed } from '@/components/commit-feed';
+import { PageTabs } from '@/components/page-tabs';
 import AppLayout from '@/layouts/app-layout';
-import { cn } from '@/lib/utils';
 import type { Commit, CursorPaginated, Log } from '@/types';
-
-const tabs: { log: Log; title: string }[] = [
-    { log: 'following', title: 'Following' },
-    { log: 'everyone', title: 'Everyone' },
-];
 
 export default function Show({
     log,
@@ -20,56 +15,58 @@ export default function Show({
 }) {
     return (
         <>
-            <Head title={log === 'following' ? 'Log' : 'Explore'} />
+            <Head title={log === 'following' ? 'Log' : 'Everyone'} />
 
-            <div className="mx-auto w-full max-w-2xl border-x border-sidebar-border/70 dark:border-sidebar-border">
-                <nav
-                    className="flex border-b border-sidebar-border/70 dark:border-sidebar-border"
-                    aria-label="Logs"
-                >
-                    {tabs.map((tab) => (
-                        <Link
-                            key={tab.log}
-                            href={LogController.show(tab.log)}
-                            prefetch
-                            className={cn(
-                                'flex-1 py-3 text-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent',
-                                {
-                                    'border-b-2 border-foreground text-foreground':
-                                        tab.log === log,
-                                },
-                            )}
-                        >
-                            {tab.title}
-                        </Link>
-                    ))}
-                </nav>
-
-                <CommitComposer />
-
-                <CommitFeed
-                    commits={commits}
-                    empty={
-                        log === 'following' ? (
-                            <>
-                                Your log is empty. Follow some developers from
-                                the{' '}
-                                <Link
-                                    href={LogController.show('everyone')}
-                                    className="font-medium text-foreground underline underline-offset-4"
-                                >
-                                    Everyone
-                                </Link>{' '}
-                                log.
-                            </>
-                        ) : (
-                            'Nobody has committed anything yet. Be the first!'
-                        )
-                    }
+            <div className="sticky top-0 z-10 bg-card">
+                <h1 className="sr-only">
+                    {log === 'following' ? 'Log' : 'Everyone'}
+                </h1>
+                <PageTabs
+                    label="Logs"
+                    tabs={[
+                        {
+                            title: 'Log',
+                            href: LogController.show('following'),
+                            isActive: log === 'following',
+                        },
+                        {
+                            title: 'Everyone',
+                            href: LogController.show('everyone'),
+                            isActive: log === 'everyone',
+                        },
+                    ]}
                 />
             </div>
+
+            <CommitComposer />
+
+            <CommitFeed
+                commits={commits}
+                firstLane="var(--rail)"
+                end="That's the root commit. There's nothing before it."
+                empty={
+                    log === 'following' ? (
+                        <EmptyFeed command="fatal: your log does not have any commits yet">
+                            Your log shows your commits and commits from people
+                            you follow. Find someone worth following on{' '}
+                            <Link
+                                href={LogController.show('everyone')}
+                                className="font-medium text-primary underline"
+                            >
+                                Everyone
+                            </Link>
+                            .
+                        </EmptyFeed>
+                    ) : (
+                        <EmptyFeed command="fatal: no commits yet">
+                            Nobody has committed anything. Be the first. It's 72
+                            characters; you'll be fine.
+                        </EmptyFeed>
+                    )
+                }
+            />
         </>
     );
 }
 
-Show.layout = [AppLayout, {}];
+Show.layout = AppLayout;
