@@ -18,5 +18,5 @@ export type Profile = User & {
 };
 
 export type Auth = {
-    user: User;
+    user: Profile;
 };

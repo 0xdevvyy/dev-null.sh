@@ -41,3 +41,27 @@ export function formatRelativeTime(date: string, now: Date = new Date()) {
                 : 'numeric',
     });
 }
+
+const laneCount = 6;
+
+export function laneFor(id: string): string {
+    let hash = 0;
+
+    for (const character of id) {
+        hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+    }
+
+    return `var(--lane-${hash % laneCount})`;
+}
+
+export function shortHash(id: string): string {
+    return id.replaceAll('-', '').slice(-7);
+}
+
+export function isWithinSeconds(
+    date: string,
+    seconds: number,
+    now: Date = new Date(),
+) {
+    return now.getTime() - new Date(date).getTime() < seconds * 1000;
+}

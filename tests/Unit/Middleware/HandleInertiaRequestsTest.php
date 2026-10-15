@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -46,6 +47,23 @@ it('shares authenticated user data', function (): void {
         ->and($shared['auth']['user']->id)->toBe($user->id)
         ->and($shared['auth']['user']->name)->toBe('Test User')
         ->and($shared['auth']['user']->username)->toBe('test-user');
+});
+
+it('shares the authenticated user post and follow counts', function (): void {
+    $user = User::factory()->has(Post::factory()->count(2))->create();
+    $user->following()->attach(User::factory()->count(3)->create());
+    User::factory()->create()->following()->attach($user);
+
+    $middleware = new HandleInertiaRequests();
+
+    $request = Request::create('/', 'GET');
+    $request->setUserResolver(fn () => $user);
+
+    $shared = $middleware->share($request);
+
+    expect($shared['auth']['user']->posts_count)->toBe(2)
+        ->and($shared['auth']['user']->following_count)->toBe(3)
+        ->and($shared['auth']['user']->followers_count)->toBe(1);
 });
 
 it('defaults sidebarOpen to true when no cookie', function (): void {

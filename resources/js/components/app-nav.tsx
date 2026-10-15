@@ -1,0 +1,169 @@
+import { Link, usePage } from '@inertiajs/react';
+import { GitCommitVertical, Globe, Settings2, UserRound } from 'lucide-react';
+import TimelineController from '@/actions/App/Http/Controllers/TimelineController';
+import AppLogo from '@/components/app-logo';
+import AppLogoIcon from '@/components/app-logo-icon';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { UserAvatar } from '@/components/user-avatar';
+import { UserMenuContent } from '@/components/user-menu-content';
+import { useCurrentUrl } from '@/hooks/use-current-url';
+import { cn } from '@/lib/utils';
+import { show } from '@/routes/user';
+import { edit } from '@/routes/user-profile';
+import type { NavItem } from '@/types';
+
+function useNavItems(): (NavItem & { isActive: boolean })[] {
+    const { auth } = usePage().props;
+    const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
+
+    return [
+        {
+            title: 'Log',
+            href: TimelineController.show('following'),
+            icon: GitCommitVertical,
+        },
+        {
+            title: 'Everyone',
+            href: TimelineController.show('everyone'),
+            icon: Globe,
+        },
+        {
+            title: 'Profile',
+            href: show(auth.user),
+            icon: UserRound,
+        },
+        {
+            title: 'Settings',
+            href: edit(),
+            icon: Settings2,
+        },
+    ].map((item) => ({
+        ...item,
+        isActive:
+            item.title === 'Settings'
+                ? isCurrentOrParentUrl('/settings')
+                : isCurrentUrl(item.href),
+    }));
+}
+
+export function AppNav() {
+    const { auth } = usePage().props;
+    const items = useNavItems();
+
+    return (
+        <header className="sticky top-0 hidden h-svh w-20 shrink-0 flex-col items-center py-6 md:flex lg:w-64 lg:items-stretch lg:px-4">
+            <Link
+                href={TimelineController.show('following')}
+                className="mb-8 rounded-md px-3 lg:px-3"
+                aria-label="devnull, go to your log"
+            >
+                <AppLogoIcon className="size-7 fill-current lg:hidden" />
+                <AppLogo className="hidden text-[1.75rem] font-bold tracking-[-0.03em] lg:inline-flex" />
+                <span className="mt-1 hidden text-sm text-muted-foreground lg:block">
+                    a social network for devs
+                </span>
+            </Link>
+
+            <nav aria-label="Main" className="flex flex-col gap-1">
+                {items.map((item) => (
+                    <Link
+                        key={item.title}
+                        href={item.href}
+                        prefetch
+                        aria-current={item.isActive ? 'page' : undefined}
+                        className={cn(
+                            'flex items-center gap-3 rounded-lg p-3 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
+                            {
+                                'bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary':
+                                    item.isActive,
+                            },
+                        )}
+                    >
+                        {item.icon && <item.icon className="size-5" />}
+                        <span className="sr-only lg:not-sr-only">
+                            {item.title}
+                        </span>
+                    </Link>
+                ))}
+            </nav>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    className="mt-auto flex items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-accent data-[state=open]:bg-accent"
+                    data-test="user-menu-button"
+                >
+                    <UserAvatar user={auth.user} className="size-9" />
+                    <span className="hidden min-w-0 flex-1 lg:block">
+                        <span className="block truncate text-sm font-medium">
+                            {auth.user.name}
+                        </span>
+                        <span className="block truncate font-mono text-xs text-muted-foreground">
+                            @{auth.user.username}
+                        </span>
+                    </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-60" side="top" align="start">
+                    <UserMenuContent user={auth.user} />
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </header>
+    );
+}
+
+export function MobileHeader() {
+    const { auth } = usePage().props;
+
+    return (
+        <div className="flex h-14 items-center justify-between border-b px-4 md:hidden">
+            <Link
+                href={TimelineController.show('following')}
+                aria-label="devnull, go to your log"
+            >
+                <AppLogo className="text-lg" />
+            </Link>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    className="rounded-full"
+                    aria-label="Account menu"
+                >
+                    <UserAvatar user={auth.user} className="size-8" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-60" align="end">
+                    <UserMenuContent user={auth.user} />
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
+}
+
+export function MobileNav() {
+    const items = useNavItems();
+
+    return (
+        <nav
+            aria-label="Main"
+            className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        >
+            {items.map((item) => (
+                <Link
+                    key={item.title}
+                    href={item.href}
+                    prefetch
+                    aria-current={item.isActive ? 'page' : undefined}
+                    className={cn(
+                        'flex flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground',
+                        { 'text-primary': item.isActive },
+                    )}
+                >
+                    {item.icon && <item.icon className="size-5" />}
+                    {item.title}
+                </Link>
+            ))}
+        </nav>
+    );
+}

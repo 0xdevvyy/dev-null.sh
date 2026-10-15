@@ -1,72 +1,169 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import PostController from '@/actions/App/Http/Controllers/PostController';
+import { GraphRail } from '@/components/graph-rail';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
-import { formatRelativeTime } from '@/lib/utils';
+import {
+    cn,
+    formatRelativeTime,
+    isWithinSeconds,
+    laneFor,
+    shortHash,
+} from '@/lib/utils';
 import { show } from '@/routes/user';
 import type { Post } from '@/types';
 
-export function PostCard({ post }: { post: Post }) {
+export function PostCard({
+    post,
+    previousLane,
+}: {
+    post: Post;
+    previousLane?: string;
+}) {
     const { auth } = usePage().props;
+    const [deletion, setDeletion] = useState<
+        'idle' | 'confirming' | 'deleting'
+    >('idle');
+
+    const isOwn = post.user_id === auth.user.id;
+    const hash = shortHash(post.id);
+
+    const deletePost = () => {
+        setDeletion('deleting');
+
+        const prefersReducedMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        ).matches;
+
+        window.setTimeout(
+            () =>
+                router.visit(PostController.destroy(post), {
+                    preserveScroll: true,
+                    onError: () => setDeletion('idle'),
+                }),
+            prefersReducedMotion ? 0 : 700,
+        );
+    };
 
     return (
         <article
-            className="flex gap-3 border-b border-sidebar-border/70 px-4 py-4 dark:border-sidebar-border"
+            className={cn(
+                'group grid transition-[grid-template-rows,opacity] duration-300 ease-out',
+                deletion === 'deleting'
+                    ? 'grid-rows-[0fr] opacity-0 delay-400'
+                    : 'grid-rows-[1fr]',
+            )}
             data-test="post"
         >
-            <Link href={show(post.user)} className="shrink-0">
-                <UserAvatar user={post.user} className="size-10" />
-            </Link>
+            <div className="flex min-h-0 overflow-hidden">
+                <GraphRail
+                    lane={laneFor(post.user_id)}
+                    previousLane={previousLane}
+                    isFresh={isOwn && isWithinSeconds(post.created_at, 15)}
+                />
 
-            <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1 text-sm">
+                <div className="flex min-w-0 flex-1 gap-3 border-b py-3 pr-4">
                     <Link
                         href={show(post.user)}
-                        className="truncate font-semibold hover:underline"
+                        className="shrink-0 rounded-full"
                     >
-                        {post.user.name}
+                        <UserAvatar user={post.user} className="size-10" />
                     </Link>
-                    <span className="truncate text-muted-foreground">
-                        @{post.user.username}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                    <time
-                        dateTime={post.created_at}
-                        title={new Date(post.created_at).toLocaleString()}
-                        className="shrink-0 text-muted-foreground"
-                    >
-                        {formatRelativeTime(post.created_at)}
-                    </time>
 
-                    {post.user_id === auth.user.id && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="ml-auto size-7 text-muted-foreground hover:text-destructive"
-                            asChild
-                        >
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-1.5 text-[15px]">
                             <Link
-                                href={PostController.destroy(post)}
-                                as="button"
-                                preserveScroll
-                                onBefore={() =>
-                                    confirm(
-                                        'Are you sure you want to delete this post?',
-                                    )
-                                }
-                                aria-label="Delete post"
-                                data-test="delete-post-button"
+                                href={show(post.user)}
+                                className="truncate font-semibold hover:underline"
                             >
-                                <Trash2 />
+                                {post.user.name}
                             </Link>
-                        </Button>
-                    )}
-                </div>
+                            <span className="truncate font-mono text-[13px] text-muted-foreground">
+                                @{post.user.username}
+                            </span>
+                            <span aria-hidden className="text-muted-foreground">
+                                ·
+                            </span>
+                            <time
+                                dateTime={post.created_at}
+                                title={new Date(
+                                    post.created_at,
+                                ).toLocaleString()}
+                                className="shrink-0 font-mono text-[13px] text-muted-foreground"
+                            >
+                                {formatRelativeTime(post.created_at)}
+                            </time>
 
-                <p className="mt-1 text-sm break-words whitespace-pre-wrap">
-                    {post.body}
-                </p>
+                            <span
+                                className="ml-auto hidden shrink-0 font-mono text-[13px] text-muted-foreground sm:inline"
+                                title={`Post ${post.id}`}
+                            >
+                                {hash}
+                            </span>
+
+                            {isOwn && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDeletion('confirming')}
+                                    aria-label="Delete commit"
+                                    title="Delete commit"
+                                    className="-my-1 ml-auto shrink-0 self-center rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 sm:ml-1 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                                    data-test="delete-post-button"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        {deletion === 'deleting' ? (
+                            <p
+                                className="mt-0.5 font-mono text-sm text-muted-foreground"
+                                role="status"
+                            >
+                                rm {hash} → /dev/null
+                            </p>
+                        ) : (
+                            <p className="mt-0.5 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
+                                {post.body}
+                            </p>
+                        )}
+
+                        {deletion === 'confirming' && (
+                            <div
+                                role="group"
+                                aria-label="Confirm delete"
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Escape') {
+                                        setDeletion('idle');
+                                    }
+                                }}
+                                className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-destructive/8 px-3 py-2 text-sm"
+                            >
+                                <span className="mr-auto">
+                                    Delete this commit? There's no undo.
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    autoFocus
+                                    onClick={() => setDeletion('idle')}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={deletePost}
+                                    data-test="confirm-delete-post-button"
+                                >
+                                    Delete
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </article>
     );

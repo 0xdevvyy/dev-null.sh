@@ -38,6 +38,7 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 - Name: **devnull** (lowercase), a nod to `/dev/null`.
 - Voice: dry, terminal-literate humor. Understated wit; copy may wink at Unix and `/dev/null`, but stays clear and never obscures what an action does.
 - Current tagline in use: "A social network for developers."
+- UI vocabulary: the Following timeline is the **Log**; posts are **commits** ("Commit" button, "3 commits"). Routes, models, and code keep `timeline`/`post`.
 
 ## Evidence on Hand
 
