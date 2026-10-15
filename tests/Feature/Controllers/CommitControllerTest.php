@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CommitStatus;
 use App\Enums\Log;
 use App\Models\Commit;
 use App\Models\User;
@@ -152,4 +153,32 @@ it('may not delete commits of other users', function (): void {
     $response->assertForbidden();
 
     expect($commit->fresh())->not->toBeNull();
+});
+
+it('tells users their commit is pending review', function (): void {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->fromRoute('log.show', Log::Following)
+        ->post(route('commit.store'), ['title' => 'Initial commit']);
+
+    $response->assertRedirectToRoute('log.show', Log::Following)
+        ->assertInertiaFlash('toast.type', 'info');
+
+    expect($user->commits()->sole()->status)->toBe(CommitStatus::Pending);
+});
+
+it('publishes commits of admins right away', function (): void {
+    config(['app.admins' => ['nunomaduro']]);
+
+    $user = User::factory()->create(['username' => 'nunomaduro']);
+
+    $response = $this->actingAs($user)
+        ->fromRoute('log.show', Log::Following)
+        ->post(route('commit.store'), ['title' => 'Initial commit']);
+
+    $response->assertRedirectToRoute('log.show', Log::Following)
+        ->assertInertiaFlashMissing('toast');
+
+    expect($user->commits()->sole()->status)->toBe(CommitStatus::Approved);
 });

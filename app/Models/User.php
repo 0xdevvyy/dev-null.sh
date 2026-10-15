@@ -98,6 +98,14 @@ final class User extends Authenticatable
         return '';
     }
 
+    public function isAdmin(): bool
+    {
+        /** @var list<string> $admins */
+        $admins = config('app.admins');
+
+        return in_array(mb_strtolower($this->username), array_map(mb_strtolower(...), $admins), true);
+    }
+
     public function isFollowing(self $user): bool
     {
         return $this->following()->whereKey($user->id)->exists();

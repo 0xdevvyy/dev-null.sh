@@ -17,3 +17,16 @@ it('includes commits of everyone newest first', function (): void {
     expect($commits->modelKeys())->toBe([$newer->id, $older->id])
         ->and($commits->first()->relationLoaded('user'))->toBeTrue();
 });
+
+it('only includes approved commits of others', function (): void {
+    $user = User::factory()->create();
+
+    $approved = Commit::factory()->create(['created_at' => now()->subMinutes(2)]);
+    $ownPending = Commit::factory()->for($user)->pending()->create(['created_at' => now()->subMinute()]);
+    Commit::factory()->pending()->create();
+    Commit::factory()->rejected()->create();
+
+    $commits = resolve(EveryoneLogQuery::class)->builder($user)->get();
+
+    expect($commits->modelKeys())->toBe([$ownPending->id, $approved->id]);
+});

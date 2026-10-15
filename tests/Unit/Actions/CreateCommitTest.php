@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\CreateCommit;
+use App\Enums\CommitStatus;
 use App\Models\User;
 
 it('may create a commit', function (): void {
@@ -25,4 +26,22 @@ it('may create a commit without a description', function (): void {
 
     expect($commit->title)->toBe('Initial commit')
         ->and($commit->description)->toBeNull();
+});
+
+it('creates commits pending review', function (): void {
+    $action = resolve(CreateCommit::class);
+
+    $commit = $action->handle(User::factory()->create(), 'Initial commit');
+
+    expect($commit->status)->toBe(CommitStatus::Pending);
+});
+
+it('approves commits of admins right away', function (): void {
+    config(['app.admins' => ['nunomaduro']]);
+
+    $action = resolve(CreateCommit::class);
+
+    $commit = $action->handle(User::factory()->create(['username' => 'nunomaduro']), 'Initial commit');
+
+    expect($commit->status)->toBe(CommitStatus::Approved);
 });

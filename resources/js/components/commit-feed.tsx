@@ -11,11 +11,13 @@ export function CommitFeed({
     empty,
     end,
     firstLane,
+    actions,
 }: {
     commits: CursorPaginated<Commit>;
     empty: ReactNode;
     end: string;
     firstLane?: string;
+    actions?: (commit: Commit) => ReactNode;
 }) {
     if (commits.data.length === 0) {
         return <div className="px-6 py-16 text-center sm:px-12">{empty}</div>;
@@ -44,6 +46,7 @@ export function CommitFeed({
                                 ? firstLane
                                 : laneFor(commits.data[index - 1].user_id)
                         }
+                        actions={actions?.(commit)}
                     />
                 ))}
             </InfiniteScroll>

@@ -51,3 +51,19 @@ it('resolves followed users in a subquery instead of loading their ids', functio
     expect(DB::getQueryLog())->toBeEmpty()
         ->and($builder->toSql())->toContain('select "followed_id" from "follows"');
 });
+
+it('only includes approved commits of followed users', function (): void {
+    $user = User::factory()->create();
+    $followed = User::factory()->create();
+
+    $user->following()->attach($followed);
+
+    $approved = Commit::factory()->for($followed)->create(['created_at' => now()->subMinutes(2)]);
+    $ownPending = Commit::factory()->for($user)->pending()->create(['created_at' => now()->subMinute()]);
+    Commit::factory()->for($followed)->pending()->create();
+    Commit::factory()->for($followed)->rejected()->create();
+
+    $commits = resolve(FollowingLogQuery::class)->builder($user)->get();
+
+    expect($commits->modelKeys())->toBe([$ownPending->id, $approved->id]);
+});

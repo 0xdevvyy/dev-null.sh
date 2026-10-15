@@ -34,6 +34,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Admins
+    |--------------------------------------------------------------------------
+    |
+    | The GitHub usernames listed here are admins of the application, which
+    | allows them to moderate commits. Set them as a comma separated list
+    | in your ".env" file, for example: "ADMINS=nunomaduro,taylorotwell".
+    |
+    */
+
+    'admins' => array_values(array_filter(array_map(
+        trim(...),
+        explode(',', (string) env('ADMINS', '')),
+    ))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |

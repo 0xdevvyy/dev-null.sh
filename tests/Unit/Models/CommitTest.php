@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CommitStatus;
 use App\Models\Commit;
 use App\Models\User;
 
@@ -16,6 +17,7 @@ test('to array', function (): void {
             'description',
             'created_at',
             'updated_at',
+            'status',
         ]);
 });
 
@@ -24,4 +26,10 @@ it('belongs to a user', function (): void {
     $commit = Commit::factory()->for($user)->create();
 
     expect($commit->user->is($user))->toBeTrue();
+});
+
+it('casts the status to an enum', function (): void {
+    $commit = Commit::factory()->pending()->create()->refresh();
+
+    expect($commit->status)->toBe(CommitStatus::Pending);
 });

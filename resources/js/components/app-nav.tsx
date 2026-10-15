@@ -1,6 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
-import { GitCommitVertical, Globe, Settings2, UserRound } from 'lucide-react';
+import {
+    GitCommitVertical,
+    Globe,
+    Settings2,
+    ShieldCheck,
+    UserRound,
+} from 'lucide-react';
 import LogController from '@/actions/App/Http/Controllers/LogController';
+import ModerationController from '@/actions/App/Http/Controllers/ModerationController';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import {
@@ -20,7 +27,7 @@ function useNavItems(): (NavItem & { isActive: boolean })[] {
     const { auth } = usePage().props;
     const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 
-    return [
+    const items: NavItem[] = [
         {
             title: 'Log',
             href: LogController.show('following'),
@@ -36,12 +43,23 @@ function useNavItems(): (NavItem & { isActive: boolean })[] {
             href: show(auth.user),
             icon: UserRound,
         },
+        ...(auth.isAdmin
+            ? [
+                  {
+                      title: 'Moderation',
+                      href: ModerationController.show(),
+                      icon: ShieldCheck,
+                  },
+              ]
+            : []),
         {
             title: 'Settings',
             href: edit(),
             icon: Settings2,
         },
-    ].map((item) => ({
+    ];
+
+    return items.map((item) => ({
         ...item,
         isActive:
             item.title === 'Settings'
@@ -147,7 +165,7 @@ export function MobileNav() {
     return (
         <nav
             aria-label="Main"
-            className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+            className="fixed inset-x-0 bottom-0 z-20 flex border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
         >
             {items.map((item) => (
                 <Link
@@ -156,7 +174,7 @@ export function MobileNav() {
                     prefetch
                     aria-current={item.isActive ? 'page' : undefined}
                     className={cn(
-                        'flex flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground',
+                        'flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground',
                         { 'text-primary': item.isActive },
                     )}
                 >

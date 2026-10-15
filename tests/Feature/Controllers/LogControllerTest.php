@@ -77,3 +77,22 @@ it('requires authentication', function (Log $log): void {
 
     $response->assertRedirectToRoute('home');
 })->with(Log::cases());
+
+it('hides pending commits of others from the log', function (Log $log): void {
+    $user = User::factory()->create();
+    $followed = User::factory()->create();
+
+    $user->following()->attach($followed);
+
+    Commit::factory()->for($user)->pending()->create(['title' => 'Mine']);
+    Commit::factory()->for($followed)->pending()->create(['title' => 'Followed']);
+
+    $response = $this->actingAs($user)
+        ->get(route('log.show', $log));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('commits.data', 1)
+            ->where('commits.data.0.title', 'Mine')
+            ->where('commits.data.0.status', 'pending'));
+})->with(Log::cases());

@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import CommitController from '@/actions/App/Http/Controllers/CommitController';
 import { GraphRail } from '@/components/graph-rail';
 import { Button } from '@/components/ui/button';
@@ -18,9 +19,11 @@ import type { Commit } from '@/types';
 export function CommitCard({
     commit,
     previousLane,
+    actions,
 }: {
     commit: Commit;
     previousLane?: string;
+    actions?: ReactNode;
 }) {
     const { auth } = usePage().props;
     const [deletion, setDeletion] = useState<
@@ -96,6 +99,25 @@ export function CommitCard({
                                 {formatRelativeTime(commit.created_at)}
                             </time>
 
+                            {commit.status !== 'approved' && (
+                                <span
+                                    className={cn(
+                                        'shrink-0 self-center rounded-full px-2 py-0.5 font-mono text-xs',
+                                        commit.status === 'pending'
+                                            ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                                            : 'bg-destructive/10 text-destructive',
+                                    )}
+                                    title={
+                                        commit.status === 'pending'
+                                            ? 'Only you can see this commit until it is approved.'
+                                            : 'This commit was rejected. Only you can see it.'
+                                    }
+                                    data-test="commit-status"
+                                >
+                                    {commit.status}
+                                </span>
+                            )}
+
                             <span
                                 className="ml-auto hidden shrink-0 font-mono text-[13px] text-muted-foreground sm:inline"
                                 title={`Commit ${commit.id}`}
@@ -136,6 +158,8 @@ export function CommitCard({
                                 )}
                             </>
                         )}
+
+                        {actions}
 
                         {deletion === 'confirming' && (
                             <div
