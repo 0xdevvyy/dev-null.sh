@@ -115,8 +115,8 @@ export default function Show({
                         </EmptyFeed>
                     ) : (
                         <EmptyFeed command="fatal: no commits yet">
-                            Nobody has committed anything. Be the first. It's 72
-                            characters; you'll be fine.
+                            Nobody has committed anything. Be the first. It's
+                            280 characters; you'll be fine.
                         </EmptyFeed>
                     )
                 }
@@ -146,7 +146,7 @@ function Suggestions({ suggestions }: { suggestions: Commit[] }) {
                                 </span>
                             </p>
                             <p className="truncate text-sm text-muted-foreground">
-                                {commit.title}
+                                {commit.body}
                             </p>
                         </div>
                         <Button size="sm" asChild>
