@@ -68,3 +68,14 @@ function signedCommit(SshKeyPair $keyPair, string $body, ?int $timestamp = null,
 
     return ['payload' => $payload, 'signature' => $keyPair->sign($payload)];
 }
+
+function fakeAvatar(): string
+{
+    $image = imagecreatetruecolor(4, 4);
+    imagefill($image, 0, 0, (int) imagecolorallocate($image, 255, 0, 0));
+
+    ob_start();
+    imagepng($image);
+
+    return (string) ob_get_clean();
+}

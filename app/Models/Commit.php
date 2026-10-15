@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property-read string $id
@@ -24,9 +25,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read CommitStatus $status
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
+ * @property-read CarbonInterface|null $deleted_at
  * @property-read User $user
  * @property-read Commit|null $parent
  * @property-read Collection<int, Commit> $replies
+ * @property-read int $replies_count
  */
 #[UseEloquentBuilder(CommitBuilder::class)]
 final class Commit extends Model
@@ -35,6 +38,7 @@ final class Commit extends Model
     use HasFactory;
 
     use HasUuids;
+    use SoftDeletes;
 
     /**
      * @return array<string, string>
@@ -49,7 +53,22 @@ final class Commit extends Model
             'status' => CommitStatus::class,
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * A deleted commit only ever leaves a tombstone behind: never its author or body.
+     *
+     * @return array<mixed>
+     */
+    public function toArray(): array
+    {
+        if ($this->trashed()) {
+            return array_intersect_key($this->attributesToArray(), array_flip(['id', 'parent_id', 'deleted_at', 'replies_count']));
+        }
+
+        return parent::toArray();
     }
 
     /**
@@ -74,5 +93,27 @@ final class Commit extends Model
     public function replies(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
+     * Loads what anyone may see around the commit: its author, its approved replies, and its parent only when approved.
+     */
+    public function loadPublicPreview(): self
+    {
+        return $this->loadCount(['replies' => fn (CommitBuilder $query): CommitBuilder => $query->approved()])
+            ->load(['user', 'parent' => fn (BelongsTo $query): BelongsTo => $query->where('status', CommitStatus::Approved)->with('user')]);
+    }
+
+    /**
+     * Changes whenever anything drawn on the commit's link preview image may have changed.
+     */
+    public function openGraphImageVersion(): string
+    {
+        return hash('xxh3', implode(':', [
+            $this->updated_at->getTimestamp(),
+            $this->replies_count,
+            $this->user->updated_at->getTimestamp(),
+            $this->parent?->user->username,
+        ]));
     }
 }
