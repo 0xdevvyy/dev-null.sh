@@ -32,6 +32,8 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 - Follow/unfollow, idempotent; self-follow rejected.
 - Stars: anyone who can see a commit can star and unstar it. Starring is idempotent. The count sits on the commit. A star is the engagement action, named the way GitHub names it, and it is not a git ref.
 - Deliberately excluded for now: comments, reposts, images/media, mentions, hashtags, search, notifications, DMs, other OAuth providers, public API, blocking/muting, header/banner images. Future work must not design for these as if they exist.
+- People search: find developers by name or GitHub username (⌘K). Commits are not searchable.
+- Deliberately excluded for now: comments, likes/reactions, reposts, images/media, mentions, hashtags, searching commits, notifications, DMs, other OAuth providers, public API, moderation tools, blocking/muting, header/banner images. Future work must not design for these as if they exist.
 - Open: handling GitHub username renames that collide with a stale username.
 
 ## Brand Commitments
