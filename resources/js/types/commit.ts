@@ -10,12 +10,22 @@ export type Commit = {
     status: CommitStatus;
     created_at: string;
     updated_at: string;
+    deleted_at?: null;
     stars_count: number;
     starred: boolean;
     user: User;
     replies_count?: number;
-    parent?: (Omit<Commit, 'parent'> & { user: User }) | null;
+    parent?: (Omit<Commit, 'parent'> & { user: User }) | DeletedCommit | null;
 };
+
+export type DeletedCommit = {
+    id: string;
+    parent_id: string | null;
+    deleted_at: string;
+    replies_count?: number;
+};
+
+export type ThreadCommit = Commit | DeletedCommit;
 
 export type CursorPaginated<T> = {
     data: T[];
