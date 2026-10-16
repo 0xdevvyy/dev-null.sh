@@ -97,6 +97,11 @@ final class AppServiceProvider extends ServiceProvider
             $request->user() instanceof User ? $this->userId($request) : 'ip:'.$request->ip(),
         ));
 
+        // Every commit search pays for an embedding and a relevance verdict, so it gets a budget of its own...
+        RateLimiter::for('search', fn (Request $request): Limit => Limit::perMinute(30)->by(
+            $request->user() instanceof User ? $this->userId($request) : 'ip:'.$request->ip(),
+        ));
+
         // Exports stream every commit a user ever made...
         RateLimiter::for('exports', fn (Request $request): Limit => Limit::perHour(3)->by($this->userId($request)));
     }

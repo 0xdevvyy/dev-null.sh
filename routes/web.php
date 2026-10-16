@@ -17,6 +17,7 @@ use App\Http\Controllers\CommitRejectionController;
 use App\Http\Controllers\CommitReplyController;
 use App\Http\Controllers\CommitReportController;
 use App\Http\Controllers\CommitRestorationController;
+use App\Http\Controllers\CommitSearchController;
 use App\Http\Controllers\CommitSeriesController;
 use App\Http\Controllers\CommitSitemapController;
 use App\Http\Controllers\CommitStarController;
@@ -127,6 +128,11 @@ Route::get('commits/{commit}/replies', [CommitReplyController::class, 'index'])
 Route::get('search/users', [UserSearchController::class, 'index'])
     ->middleware('throttle:people')
     ->name('user-search.index');
+
+// Commit Search...
+Route::get('search/commits', [CommitSearchController::class, 'index'])
+    ->middleware('throttle:search')
+    ->name('commit-search.index');
 
 Route::middleware('auth')->group(function (): void {
     // Session...

@@ -6,12 +6,25 @@ namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use UnexpectedValueException;
 
 final readonly class OpenAI
 {
+    /**
+     * The width of text-embedding-3-small's vectors, and so of the commits.embedding column.
+     */
+    public const int EMBEDDING_DIMENSIONS = 1536;
+
     private const string MODERATION_MODEL = 'omni-moderation-latest';
 
     private const string REVIEW_MODEL = 'gpt-6-astra';
+
+    /**
+     * The efficient model, for the relevance verdict on every candidate of every search.
+     */
+    private const string DECISION_MODEL = 'gpt-6-luna';
+
+    private const string EMBEDDING_MODEL = 'text-embedding-3-small';
 
     /**
      * Far stricter than OpenAI's own cut-off: any category scoring this much is flagged.
@@ -40,6 +53,13 @@ final readonly class OpenAI
         is not harmful either. When unsure, answer true.
         TEXT;
 
+    private const string RELEVANCE_INSTRUCTIONS = <<<'TEXT'
+        You review search results for devnull, a social network for developers.
+        You are given a query and a numbered list of posts. For each post, answer whether it is actually about what the
+        query asks for. A post that merely shares a word with the query, or is about something else, is not relevant.
+        Answer with one boolean per post, in the same order.
+        TEXT;
+
     public function request(): PendingRequest
     {
         return Http::baseUrl('https://api.openai.com/v1')
@@ -47,6 +67,89 @@ final readonly class OpenAI
             ->acceptJson()
             ->connectTimeout(3)
             ->timeout(15);
+    }
+
+    /**
+     * The vector for a single text, for the one-off embeds a commit gets when it is created or searched for.
+     *
+     * @return list<float>
+     */
+    public function embed(string $text): array
+    {
+        $embeddings = $this->embedMany([$text]);
+
+        throw_if($embeddings === [], UnexpectedValueException::class, 'OpenAI returned no embedding.');
+
+        return $embeddings[0];
+    }
+
+    /**
+     * The vectors for several texts in one request, in the order they were given, for backfills. The API caps a
+     * request at 2048 inputs, so callers send them in batches well under that.
+     *
+     * @param  list<string>  $texts
+     * @return list<list<float>>
+     */
+    public function embedMany(array $texts): array
+    {
+        if ($texts === []) {
+            return [];
+        }
+
+        /** @var list<array{index: int, embedding: list<float>}> $data */
+        $data = $this->request()
+            ->timeout(30)
+            ->post('embeddings', ['model' => self::EMBEDDING_MODEL, 'input' => $texts])
+            ->throw()
+            ->json('data');
+
+        usort($data, fn (array $result, array $other): int => $result['index'] <=> $other['index']);
+
+        return array_map(fn (array $result): array => array_map(floatval(...), $result['embedding']), $data);
+    }
+
+    /**
+     * Whether each body is actually about the query, in the order they were given. The vector search returns the
+     * nearest by meaning, which can include posts that merely share a word; the decision model reads the term against
+     * each one. Anything but a clear no, such as a refusal or an answer that can't be read or doesn't line up, counts
+     * as relevant, so a flaky model never hides a post.
+     *
+     * @param  list<string>  $bodies
+     * @return list<bool>
+     */
+    public function decideRelevance(string $query, array $bodies): array
+    {
+        if ($bodies === []) {
+            return [];
+        }
+
+        /** @var list<array{type: string, content?: list<array{type: string, text?: string}>}> $output */
+        $output = $this->request()
+            ->timeout(60)
+            ->post('responses', [
+                'model' => self::DECISION_MODEL,
+                'input' => [
+                    ['role' => 'system', 'content' => self::RELEVANCE_INSTRUCTIONS],
+                    ['role' => 'user', 'content' => $this->relevancePrompt($query, $bodies)],
+                ],
+                'text' => ['format' => [
+                    'type' => 'json_schema',
+                    'name' => 'relevance',
+                    'strict' => true,
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'relevant' => ['type' => 'array', 'items' => ['type' => 'boolean']],
+                        ],
+                        'required' => ['relevant'],
+                        'additionalProperties' => false,
+                    ],
+                ]],
+            ])
+            ->throw()
+            ->json('output', []);
+
+        return $this->relevanceVerdicts($output, count($bodies));
     }
 
     /**
@@ -160,5 +263,69 @@ final readonly class OpenAI
         }
 
         return true;
+    }
+
+    /**
+     * @param  list<string>  $bodies
+     */
+    private function relevancePrompt(string $query, array $bodies): string
+    {
+        $posts = [];
+
+        foreach ($bodies as $index => $body) {
+            $posts[] = ($index + 1).'. '.$body;
+        }
+
+        return "Query: {$query}\n\nPosts:\n".implode("\n", $posts);
+    }
+
+    /**
+     * @param  list<array{type: string, content?: list<array{type: string, text?: string}>}>  $output
+     * @return list<bool>
+     */
+    private function relevanceVerdicts(array $output, int $count): array
+    {
+        foreach ($output as $item) {
+            foreach ($item['content'] ?? [] as $content) {
+                if ($content['type'] !== 'output_text') {
+                    continue;
+                }
+
+                $verdicts = $this->verdictsFrom(json_decode($content['text'] ?? '', true), $count);
+
+                if ($verdicts !== null) {
+                    return $verdicts;
+                }
+            }
+        }
+
+        return array_fill(0, $count, true);
+    }
+
+    /**
+     * The verdicts are positional, one per post in the order given. A post the answer skips or answers with anything
+     * but a clear false counts as relevant.
+     *
+     * @return list<bool>|null
+     */
+    private function verdictsFrom(mixed $answer, int $count): ?array
+    {
+        if (! is_array($answer)) {
+            return null;
+        }
+
+        $relevant = $answer['relevant'] ?? null;
+
+        if (! is_array($relevant)) {
+            return null;
+        }
+
+        $verdicts = [];
+
+        for ($index = 0; $index < $count; $index++) {
+            $verdicts[] = ($relevant[$index] ?? null) !== false;
+        }
+
+        return $verdicts;
     }
 }
