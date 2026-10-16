@@ -113,6 +113,7 @@ it('leaves the profile and ssh keys untouched when github fails', function (int 
 })->with([403, 404, 500]);
 
 it('leaves the profile untouched when the ssh keys fail to sync', function (): void {
+    $stale = User::factory()->create(['github_id' => '1', 'username' => 'octocat']);
     $user = User::factory()->create(['github_id' => '583231', 'username' => 'old-username']);
 
     Http::fake([
@@ -125,7 +126,8 @@ it('leaves the profile untouched when the ssh keys fail to sync', function (): v
     expect($synced)->toBeFalse()
         ->and($user->refresh())
         ->username->toBe('old-username')
-        ->github_synced_at->toBeNull();
+        ->github_synced_at->toBeNull()
+        ->and($stale->refresh()->username)->toBe('octocat');
 });
 
 it('fails when github cannot be reached', function (): void {
@@ -139,16 +141,24 @@ it('fails when github cannot be reached', function (): void {
         ->and($user->refresh()->username)->toBe('old-username');
 });
 
-it('fails without changes when another user still holds the new username', function (): void {
-    User::factory()->create(['username' => 'octocat']);
-    $user = User::factory()->create(['username' => 'old-username']);
+it('frees the stale username when syncing a renamed github account', function (string $staleUsername): void {
+    $stale = User::factory()->create(['github_id' => '1', 'username' => $staleUsername, 'bio' => 'Renamed away']);
+    $user = User::factory()->create(['github_id' => '583231', 'username' => 'old-username', 'email' => 'private@example.com']);
 
     fakeGitHubAccount($user, ['login' => 'octocat']);
 
     $synced = resolve(UpdateUserProfile::class)->handle($user);
 
-    expect($synced)->toBeFalse()
+    expect($synced)->toBeTrue()
         ->and($user->refresh())
-        ->username->toBe('old-username')
-        ->github_synced_at->toBeNull();
-});
+        ->username->toBe('octocat')
+        ->github_id->toBe('583231')
+        ->email->toBe('private@example.com')
+        ->github_synced_at->toDateTimeString()->toBe(now()->toDateTimeString());
+
+    expect($stale->refresh())
+        ->username->toBe('_renamed-1')
+        ->github_id->toBe('1')
+        ->bio->toBe('Renamed away')
+        ->and(User::query()->count())->toBe(2);
+})->with(['octocat', 'OctoCat']);

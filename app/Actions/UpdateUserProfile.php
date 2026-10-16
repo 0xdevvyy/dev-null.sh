@@ -10,6 +10,7 @@ use App\Services\GitHub;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Mirrors the GitHub profile and SSH keys of a user again, without them having to sign in.
@@ -19,6 +20,7 @@ final readonly class UpdateUserProfile
     public function __construct(
         private GitHub $github,
         private UpdateUserSshKeys $updateUserSshKeys,
+        private UpdateStaleUsernames $updateStaleUsernames,
     ) {
         //
     }
@@ -32,11 +34,17 @@ final readonly class UpdateUserProfile
 
             $this->updateUserSshKeys->handle($user);
 
-            // The email is left alone: the public API only has the public one, sign-in also knows the private one.
-            $user->update([
-                ...GitHubProfile::fromAccount($account)->attributes(),
-                'github_synced_at' => now(),
-            ]);
+            $profile = GitHubProfile::fromAccount($account);
+
+            DB::transaction(function () use ($user, $profile): void {
+                $this->updateStaleUsernames->handle($profile->username, $user->github_id);
+
+                // The email is left alone: the public API only has the public one, sign-in also knows the private one.
+                $user->update([
+                    ...$profile->attributes(),
+                    'github_synced_at' => now(),
+                ]);
+            });
         } catch (ConnectionException|RequestException|UniqueConstraintViolationException $exception) {
             report($exception);
 
