@@ -10,7 +10,6 @@ use App\Services\DnsResolvers\SystemDnsResolver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Inertia\ExceptionResponse;
@@ -25,7 +24,23 @@ final class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->bootRateLimitingDefaults();
+        // Every sync costs four GitHub API requests, out of a shared hourly budget...
+        RateLimiter::for('profile-syncs', function (Request $request): Limit {
+            $user = $request->user();
+            assert($user instanceof User);
+
+            return Limit::perMinute(1)->by($user->id)->response(function (): RedirectResponse {
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => __('You just synced. Try again in a minute.'),
+                ]);
+
+                return back();
+            });
+        });
+
+        RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(60)->by((string) $request->ip()));
+
         $this->bootExceptionHandling();
     }
 
@@ -58,46 +73,5 @@ final class AppServiceProvider extends ServiceProvider
                 'status' => $response->statusCode(),
             ])->withSharedData();
         });
-    }
-
-    private function bootRateLimitingDefaults(): void
-    {
-        RateLimiter::for('commits', function (Request $request): Limit {
-            $user = $request->user();
-            assert($user instanceof User);
-
-            // The `devnull commit` script prints plain text...
-            if ($request->routeIs('cli-commit.store')) {
-                return Limit::perMinute(10)->by($user->id)->response(
-                    fn (Request $request, array $headers): Response => response(__('Slow down: 10 commits a minute. Even CI takes breaks.')."\n", 429, $headers)
-                        ->header('Content-Type', 'text/plain; charset=utf-8'),
-                );
-            }
-
-            return Limit::perMinute(10)->by($user->id)->response(function (): RedirectResponse {
-                Inertia::flash('toast', [
-                    'type' => 'error',
-                    'message' => __('Slow down: 10 commits a minute. Even CI takes breaks.'),
-                ]);
-
-                return back();
-            });
-        });
-
-        // Every sync costs four GitHub API requests, out of a shared hourly budget...
-        RateLimiter::for('profile-syncs', function (Request $request): Limit {
-            $user = $request->user();
-            assert($user instanceof User);
-
-            return Limit::perMinute(1)->by($user->id)->response(function (): RedirectResponse {
-                Inertia::flash('toast', [
-                    'type' => 'error',
-                    'message' => __('You just synced. Try again in a minute.'),
-                ]);
-
-                return back();
-            });
-        });
-        RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(60)->by((string) $request->ip()));
     }
 }
