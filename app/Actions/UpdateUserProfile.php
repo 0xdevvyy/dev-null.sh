@@ -28,7 +28,7 @@ final readonly class UpdateUserProfile
         try {
             // Look the account up by its immutable ID: a username can be renamed and then claimed by someone else.
             /** @var array<array-key, mixed> $account */
-            $account = $this->github->api()->get("user/{$user->github_id}")->throw()->json();
+            $account = $this->github->request()->get("user/{$user->github_id}")->throw()->json();
 
             $this->updateUserSshKeys->handle($user);
 

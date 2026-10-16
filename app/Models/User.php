@@ -31,6 +31,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read string|null $pinned_commit_id
  * @property-read Log $log
  * @property-read CarbonInterface|null $onboarded_at
+ * @property-read CarbonInterface|null $github_follows_imported_at
  * @property-read string|null $remember_token
  * @property-read CarbonInterface|null $github_synced_at
  * @property-read CarbonInterface $created_at
@@ -54,6 +55,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
     'github_synced_at',
     'log',
     'onboarded_at',
+    'github_follows_imported_at',
 ])]
 final class User extends Authenticatable
 {
@@ -90,6 +92,7 @@ final class User extends Authenticatable
             'pinned_commit_id' => 'string',
             'log' => Log::class,
             'onboarded_at' => 'datetime',
+            'github_follows_imported_at' => 'datetime',
             'remember_token' => 'string',
             'github_synced_at' => 'datetime',
             'created_at' => 'datetime',

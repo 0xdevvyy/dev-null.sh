@@ -32,19 +32,15 @@ final readonly class UpdateUserSshKeys
             return;
         }
 
-        // Look the account up by its immutable ID: a username can be renamed and then claimed by someone else.
-        $account = $this->github->api()->get("user/{$user->github_id}");
+        $username = $this->github->login($user->github_id);
 
-        if ($account->notFound()) {
+        if ($username === null) {
             $user->sshKeys()->delete();
 
             Cache::put($cacheKey, true, now()->addMinutes(self::FreshForMinutes));
 
             return;
         }
-
-        $username = $account->throw()->json('login');
-        assert(is_string($username));
 
         $fingerprints = $this->publicKeys("users/{$username}/keys")
             ->merge($this->publicKeys("users/{$username}/ssh_signing_keys"))
@@ -75,7 +71,7 @@ final readonly class UpdateUserSshKeys
     private function publicKeys(string $path): Collection
     {
         /** @var list<array{key: string}> $keys */
-        $keys = $this->github->api()->get($path, ['per_page' => 100])->throw()->json();
+        $keys = $this->github->request()->get($path, ['per_page' => 100])->throw()->json();
 
         return collect($keys)
             ->map(fn (array $key): ?SshPublicKey => SshPublicKey::tryFromOpenSsh($key['key']))

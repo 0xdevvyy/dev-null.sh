@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowUpRight, Download, RefreshCw } from 'lucide-react';
 import ExportController from '@/actions/App/Http/Controllers/ExportController';
 import UserProfileController from '@/actions/App/Http/Controllers/UserProfileController';
@@ -9,6 +9,7 @@ import LanePicker from '@/components/lane-picker';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useNow } from '@/hooks/use-now';
+import { useUser } from '@/hooks/use-user';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { formatFullDateTime } from '@/lib/utils';
@@ -45,7 +46,7 @@ export default function Edit({
     automaticLane: number;
     githubSyncedAt: string | null;
 }) {
-    const { auth } = usePage().props;
+    const { user } = useUser();
     const now = useNow();
 
     return (
@@ -89,7 +90,7 @@ export default function Edit({
                         )}
                     </Form>
                     <Button variant="outline" asChild>
-                        <Link href={show(auth.user)}>View profile</Link>
+                        <Link href={show(user)}>View profile</Link>
                     </Button>
                 </div>
 
