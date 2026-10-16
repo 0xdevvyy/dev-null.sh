@@ -80,7 +80,7 @@ it('commits with the key from the secret, signed so devnull accepts it', functio
     $result = ($this->runAction)();
 
     expect($result->exitCode())->toBe(0)
-        ->and($result->output())->toBe("::notice title=/dev/null::Committed: https://dev-null.sh/@nunomaduro/commits/0be0130 (pending review, only you can see it until it is approved)\n")
+        ->and($result->output())->toBe("::notice title=devnull::Committed: https://dev-null.sh/@nunomaduro/commits/0be0130 (pending review, only you can see it until it is approved)\n")
         ->and($result->output().$result->errorOutput())->not->toContain('PRIVATE KEY')
         ->and(File::get("{$this->sandbox}/sent-candidates"))->toBe($this->publicKey->toOpenSsh()."\n")
         ->and(File::allFiles("{$this->sandbox}/home", hidden: true))->toBeEmpty();
@@ -116,14 +116,14 @@ it('fails with the answer of devnull', function (): void {
     $result = ($this->runAction)(['COMMIT_STATUS' => '429']);
 
     expect($result->exitCode())->toBe(1)
-        ->and($result->output())->toBe("::error title=/dev/null::Slow down: 10 commits a minute. Even CI takes breaks.\n");
+        ->and($result->output())->toBe("::error title=devnull::Slow down: 10 commits a minute. Even CI takes breaks.\n");
 });
 
 it('fails when the secret is not a private key without a passphrase', function (string $key): void {
     $result = ($this->runAction)(['DEVNULL_SSH_KEY' => $key]);
 
     expect($result->exitCode())->toBe(1)
-        ->and($result->output())->toBe("::error title=/dev/null::Could not load the ssh-key input: it must be a private Ed25519 or RSA key without a passphrase.\n")
+        ->and($result->output())->toBe("::error title=devnull::Could not load the ssh-key input: it must be a private Ed25519 or RSA key without a passphrase.\n")
         ->and(File::exists("{$this->sandbox}/sent-candidates"))->toBeFalse();
 })->with([
     'a public key' => fn (): string => $this->publicKey->toOpenSsh(),
@@ -134,5 +134,5 @@ it('requires a body', function (): void {
     $result = ($this->runAction)(['DEVNULL_BODY' => '']);
 
     expect($result->exitCode())->toBe(1)
-        ->and($result->output())->toBe("::error title=/dev/null::The body input is empty.\n");
+        ->and($result->output())->toBe("::error title=devnull::The body input is empty.\n");
 });
