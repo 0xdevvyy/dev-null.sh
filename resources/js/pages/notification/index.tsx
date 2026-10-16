@@ -36,6 +36,7 @@ import {
     cn,
     formatDayLabel,
     formatRelativeTime,
+    laneColor,
     localDayKey,
 } from '@/lib/utils';
 import { show } from '@/routes/user';
@@ -719,9 +720,11 @@ function NotificationContent({
     }[notification.type];
     const icon = (
         <Icon
-            className={cn('size-4 shrink-0 text-muted-foreground', {
+            className={cn('size-4 shrink-0', {
+                'text-muted-foreground': moderation,
                 'fill-current': notification.type === 'starred',
             })}
+            style={moderation ? undefined : { color: laneColor(actor.lane) }}
             aria-hidden
         />
     );
