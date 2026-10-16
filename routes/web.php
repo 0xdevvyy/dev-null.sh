@@ -12,6 +12,7 @@ use App\Http\Controllers\CommitOpenGraphImageController;
 use App\Http\Controllers\CommitPhotoController;
 use App\Http\Controllers\CommitPinController;
 use App\Http\Controllers\CommitPollVoteController;
+use App\Http\Controllers\CommitPreviewController;
 use App\Http\Controllers\CommitRejectionController;
 use App\Http\Controllers\CommitReplyController;
 use App\Http\Controllers\CommitRestorationController;
@@ -147,6 +148,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('commits', [CommitController::class, 'store'])
         ->middleware(ThrottleCommits::class)
         ->name('commit.store');
+    Route::post('commits/preview', [CommitPreviewController::class, 'store'])
+        ->name('commit-preview.store');
     Route::post('commits/series', [CommitSeriesController::class, 'store'])
         ->middleware(ThrottleCommits::class)
         ->name('commit-series.store');
