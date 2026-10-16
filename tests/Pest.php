@@ -73,18 +73,23 @@ function embeddingsResponse(array $embeddings): array
 }
 
 /**
- * The decision model's verdicts, one per candidate in the order given. Anything past the last verdict, and everything
- * when the list is empty, counts as relevant.
+ * The decision model's answers: one predicate per candidate, in the order given, at even odds or better when the
+ * verdict is that it is relevant. An empty list leaves every candidate unjudged, and so kept.
  *
  * @param  list<bool>  $verdicts
- * @return array{output: list<array{type: string, content: list<array{type: string, text: string}>}>}
+ * @return array{answers: list<array{type: string, name: string, probability: float}>}
  */
 function relevanceResponse(array $verdicts): array
 {
-    return ['output' => [[
-        'type' => 'message',
-        'content' => [['type' => 'output_text', 'text' => json_encode(['relevant' => $verdicts])]],
-    ]]];
+    return ['answers' => array_map(
+        fn (bool $relevant, int $index): array => [
+            'type' => 'predicate',
+            'name' => 'post_'.($index + 1),
+            'probability' => $relevant ? 1.0 : 0.0,
+        ],
+        $verdicts,
+        array_keys($verdicts),
+    )];
 }
 
 /**
@@ -97,7 +102,7 @@ function fakeSearch(array $verdicts = []): void
 {
     Http::fake([
         'api.openai.com/v1/embeddings' => Http::response(embeddingsResponse([embeddingVector(0)])),
-        'api.openai.com/v1/responses' => Http::response(relevanceResponse($verdicts)),
+        'api.openai.com/v1/decisions' => Http::response(relevanceResponse($verdicts)),
     ]);
 }
 
