@@ -35,6 +35,36 @@ it('lists a pending series once in the queue with the rest of its parts in order
             ->has('commits.data.1.series_parts', 0));
 });
 
+it('shows the quoted commit of each pending series part to moderators', function (): void {
+    $parts = commitSeries(status: CommitStatus::Pending);
+    $quoted = Commit::factory()->rejected()->create();
+    $parts[1]->update(['quoted_commit_id' => $quoted->id]);
+
+    $this->actingAs($this->admin)
+        ->get(route('moderation.show'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('commits.data', 1)
+            ->where('commits.data.0.series_parts.1.quoted_commit.body', $quoted->body)
+            ->where('commits.data.0.series_parts.1.quoted_commit.user.id', $quoted->user_id));
+});
+
+it('notifies quoted authors about each series part only after approval', function (): void {
+    $parts = commitSeries(status: CommitStatus::Pending);
+    $quoted = Commit::factory()->create();
+    $parts[0]->update(['quoted_commit_id' => $quoted->id]);
+    $parts[1]->update(['quoted_commit_id' => $quoted->id]);
+
+    expect($quoted->user->notifications()->count())->toBe(0);
+
+    $this->actingAs($this->admin)
+        ->post(route('commit-approval.store', $parts[1]))
+        ->assertRedirect();
+
+    expect($quoted->user->notifications()->where('type', NotificationType::Quoted)->pluck('commit_id')->sort()->values()->all())
+        ->toBe(collect([$parts[0]->id, $parts[1]->id])->sort()->values()->all());
+});
+
 it('lists a series under its next part once its first part is deleted', function (): void {
     $parts = commitSeries(status: CommitStatus::Pending);
     $parts[0]->delete();
