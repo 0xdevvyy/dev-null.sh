@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Log;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\Cli\ScriptController;
 use App\Http\Controllers\CommitApprovalController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\SafetyController;
 use App\Http\Controllers\ScheduledCommitController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\UserActivityGraphController;
 use App\Http\Controllers\UserBlockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserFeedController;
@@ -88,6 +90,11 @@ Route::get('@{user:username}/feed.atom', [UserFeedController::class, 'show'])
     ->middleware('cache.headers:public;max_age=300;etag')
     ->name('user-feed.show');
 
+// User activity graph, embedded in READMEs...
+Route::get('@{user:username}/graph.svg', [UserActivityGraphController::class, 'show'])
+    ->middleware(['throttle:activity-graph', 'cache.headers:public;max_age=3600;etag'])
+    ->name('user-activity-graph.show');
+
 // Commit...
 Route::get('@{user:username}/commits/{commit}/og.png', [CommitOpenGraphImageController::class, 'show'])
     ->scopeBindings()
@@ -112,6 +119,7 @@ Route::middleware('auth')->group(function (): void {
     Route::put('onboarding', [OnboardingController::class, 'update'])->name('onboarding.update');
 
     // Log...
+    Route::get('log/everyone', fn () => to_route('log.show', Log::Trending, 301));
     Route::get('log/{log}', [LogController::class, 'show'])->name('log.show');
 
     // Private saved commits...
