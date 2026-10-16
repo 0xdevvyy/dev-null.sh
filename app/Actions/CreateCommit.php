@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Dto\NewPoll;
 use App\Enums\CommitStatus;
+use App\Jobs\EmbedCommit;
 use App\Jobs\ModerateCommit;
 use App\Jobs\UnfurlLink;
 use App\Models\Commit;
@@ -37,8 +38,9 @@ final readonly class CreateCommit
      * The link preview is of the first URL in the body when true, of the given URL when a string, or none when false.
      *
      * @param  list<UploadedFile>  $images
+     * @param  array<int, string|null>  $imageDescriptions
      */
-    public function handle(User $user, string $body, ?Commit $parent = null, ?Commit $quotedCommit = null, array $images = [], bool|string $linkPreview = true, ?NewPoll $poll = null): Commit
+    public function handle(User $user, string $body, ?Commit $parent = null, ?Commit $quotedCommit = null, array $images = [], array $imageDescriptions = [], bool|string $linkPreview = true, ?NewPoll $poll = null): Commit
     {
         $url = match ($linkPreview) {
             true => $this->urls->first($body),
@@ -46,7 +48,7 @@ final readonly class CreateCommit
             default => $linkPreview,
         };
 
-        return DB::transaction(function () use ($user, $body, $parent, $quotedCommit, $images, $url, $poll): Commit {
+        return DB::transaction(function () use ($user, $body, $parent, $quotedCommit, $images, $imageDescriptions, $url, $poll): Commit {
             $linkPreview = $this->linkPreviewFor($url);
             $createdAt = now();
 
@@ -61,7 +63,7 @@ final readonly class CreateCommit
                 'created_at' => $createdAt,
             ]);
 
-            $this->createCommitImages->handle($commit, $images);
+            $this->createCommitImages->handle($commit, $images, $imageDescriptions);
 
             if ($poll instanceof NewPoll) {
                 $this->createPoll($commit, $poll);
@@ -82,6 +84,10 @@ final readonly class CreateCommit
             $this->createWorldReply->handle($commit);
             if ($commit->status === CommitStatus::Pending && filled(config('services.openai.key'))) {
                 dispatch(new ModerateCommit($commit))->afterCommit();
+            }
+
+            if (filled(config('services.openai.key'))) {
+                dispatch(new EmbedCommit($commit))->afterCommit();
             }
 
             return $commit;

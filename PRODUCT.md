@@ -12,15 +12,15 @@ Any developer with a GitHub account. They come to post short text updates, follo
 
 ## Product Purpose
 
-devnull is a social network for developers: sign in with GitHub, get a profile mirrored from GitHub, follow people, post short text, and read a timeline. Success is developers choosing to post and read here because the people on it are verifiably developers.
+/dev/null is a social network for developers: sign in with GitHub, get a profile mirrored from GitHub, follow people, post short text, and read a timeline. Success is developers choosing to post and read here because the people on it are verifiably developers.
 
 ## Positioning
 
-Identity is GitHub. Every account is a real GitHub user, and the profile (avatar, name, username, bio, company, location, website) is mirrored from GitHub on every login and cannot be edited on devnull. A general-purpose network cannot truthfully claim that every account is a developer with a public GitHub identity.
+Identity is GitHub. Every account is a real GitHub user, and the profile (avatar, name, username, bio, company, location, website) is mirrored from GitHub on every login, or on demand with "Sync from GitHub" in settings, and cannot be edited on /dev/null. A general-purpose network cannot truthfully claim that every account is a developer with a public GitHub identity.
 
 ## Operating Context
 
-- Sign-in is GitHub OAuth only. Profile changes happen on GitHub ("Edit on GitHub"), then sync at next login.
+- Sign-in is GitHub OAuth only. Profile changes happen on GitHub ("Edit on GitHub"), then sync at next login or with "Sync from GitHub" (once a minute).
 - Everything except the landing page, the public read API, and profile feeds requires login.
 - Public read API: read-only JSON under `/api/v1`, no authentication, for public profiles (with counts), a user's commits or replies, and single commits. It returns exactly what a guest's link preview may show: approved, non-deleted commits only (with their images), approved reply counts, and a parent only while it is approved. Never emails or other hidden profile fields. 60 requests a minute per IP.
 - Profile feeds: every profile has an Atom feed of its latest 50 approved top-level commits at `/@{username}/feed.atom`, their images as enclosures, advertised with `<link rel="alternate">` on the profile's guest preview.
@@ -30,8 +30,8 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 - Two logs: **Following** (my commits plus people I follow) and **Everyone** (all commits), newest first, infinite scroll.
 - Profiles live at `/@{username}` with commit, following, and follower counts, a commit activity graph with longest and current streaks, and Commits and Replies tabs. Commits is the default and lists the user's top-level commits; `?tab=replies` lists their authored replies with visible parent context. Both feeds use infinite scroll.
 - Operations (`/operations`, admins only; a 404 for everyone else): database and cache connectivity, the GitHub API rate limit when GitHub credentials are configured, the database queue backlog per queue with the age of its oldest job, the most recent failed jobs (each can be retried or forgotten), pending moderation and link previews, link previews that came back without metadata in the last 24 hours, and signups, commits, and replies over the last 24 hours and 7 days. It refreshes every 15 seconds.
-- Settings: read-only profile, color (pick one of the six graph lanes or keep the automatic one; the only devnull-owned profile setting), appearance (light/dark/system), delete account.
-- Settings: read-only profile, color (pick one of the six graph lanes or keep the automatic one; the only devnull-owned profile setting), the Markdown snippet and live preview to embed the activity graph SVG, appearance (light/dark/system), delete account.
+- Settings: read-only profile, color (pick one of the six graph lanes or keep the automatic one; the only profile setting /dev/null owns), appearance (light/dark/system), delete account.
+- Settings: read-only profile, color (pick one of the six graph lanes or keep the automatic one; the only profile setting /dev/null owns), the Markdown snippet and live preview to embed the activity graph SVG, appearance (light/dark/system), delete account.
 
 ## Capabilities and Constraints
 
@@ -43,17 +43,20 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 - Quotes: any visible commit can be quoted. A quote is a new top-level commit (same 280 limit, moderation, and rate limit) with the quoted commit embedded under its body as a compact card that opens the quoted commit's page; a reply cannot also quote. The embed only ever shows what the viewer can see: a deleted quoted commit leaves a `[deleted]` tombstone, one the viewer can no longer see (pending or rejected) reads `[unavailable]` with no author or body, and erasing an account removes embeds of erased commits, while approved quoted replies retained as authorless thread tombstones still read `[deleted]`. Quotes have no count.
 - Stars: anyone who can see a commit can star and unstar it. Starring is idempotent. The count sits on the commit. A star is the engagement action, named the way GitHub names it, and it is not a git ref.
 - Mentions: `@username` in a commit or reply mentions that developer and links to their profile. Typing `@` in either composer suggests developers (people you follow on a bare `@`, then matches by name or username, people you follow first); ↑↓ to move, ↵ or Tab to pick, Esc to dismiss. Any number of people can be mentioned in one commit. Emails, scoped packages (`@inertiajs/react`) and domains (`@vue.js`) are not mentions.
+- Reports: anyone who can see an approved commit or reply that isn't theirs can report it privately, with a reason and optional details (up to 500 characters). One report per commit per person; reporting is rate limited and never changes the commit's visibility. Moderators review open reports oldest first without the reporter's identity, and either dismiss a report to keep the commit or reject the commit, which clears its reports from the queue. Deleting a commit removes its reports.
+- Preview: both composers toggle between writing and a preview of the draft rendered exactly as the posted commit (code highlighting, inline code, emoji, mentions, links, attached images), with the URL that will get the link card marked. The eye button or ⌘/Ctrl+Shift+P toggles it; Esc in the preview goes back to writing.
 - Link cards: a commit or reply with links shows a card (title, description, image) for one of them. The first link gets it by default; in either composer the author can pick another link from the body or no card. Commits from the terminal always use the first link.
 - Links: URLs and bare domains in a commit or reply link out. Like X, a long one shows shortened: no `https://` or `www.`, the whole host, then at most 20 characters ending in `…`. Hovering shows the full URL, and copying the text gives it. Links in code stay as written. Link previews (title text and image) shorten them the same way.
 - Notifications: in-app only, for a new follower, for an approved reply to one of your commits (only the direct parent's author; never for replying to yourself), for an approved quote of one of your commits (never for quoting yourself), and for an approved commit or reply that mentions you (never for mentioning yourself; the parent's author of a reply or the quoted author of a quote hears about it as a reply or quote, not twice). A notification points to the follow, reply, quote, or mention, it never copies it: it disappears when the commit, the commit it replies to or quotes, or either user is deleted, and is hidden while the follow is undone or the commit is rejected. A follower notifies once, ever: unfollowing and following again never pings twice. Pending replies, quotes, and mentions notify nobody until approved. No notification for moderation outcomes. A new follower can be followed back, or unfollowed, right from the list. Unread count in the nav; a page is marked as read once shown.
 - People search: find developers by name or GitHub username (⌘K). Commits are not searchable.
+- Rate limits, per user: stars and saves 60/min each, pins 20/min, follows 30/min, people lookups (search, mention suggestions, hover cards) 120/min combined, exports 3/hour. Throttled actions keep the page and show a toast; throttled pages show the 429 page.
 - Public read API and Atom feeds: read-only, so nothing can be created, starred, or followed through them, and there are no API tokens. Lists are cursor-paginated, 20 per page.
 - Deliberately excluded for now: likes/reactions, reposts without a comment of your own (quotes are in), images/media, hashtags, searching commits, DMs, other OAuth providers, a write API or API tokens, moderation tools, blocking/muting, header/banner images. Future work must not design for these as if they exist.
 - GitHub username renames: signing in takes the current GitHub username. If a stale account still holds it because its owner renamed on GitHub, that account moves to a `_renamed-<github id>` placeholder until its owner signs in again. Accounts are never merged.
 
 ## Brand Commitments
 
-- Name: **devnull** (lowercase), a nod to `/dev/null`.
+- Name: **/dev/null**, written exactly like the path (lowercase, both slashes). The domain is `dev-null.sh`. `devnull` (no slashes) is only for identifiers where a slash cannot go: the database, file names, env vars, the SSH signature namespace.
 - Voice: dry, terminal-literate humor. Understated wit; copy may wink at Unix and `/dev/null`, but stays clear and never obscures what an action does.
 - Current tagline in use: "A social network for developers."
 - Vocabulary: a post is a **commit** and a timeline is a **log**, in the UI and in code (`Commit` model, `LogController`, `/log/{log}`). The git metaphor stops at those two nouns: no branches, forks, pushes, diffs, or PRs. **Star** is the engagement verb, not a git ref.
@@ -65,7 +68,7 @@ Identity is GitHub. Every account is a real GitHub user, and the profile (avatar
 
 ## Product Principles
 
-1. **GitHub is the source of truth for identity.** Never add devnull-side profile editing or alternate sign-in.
+1. **GitHub is the source of truth for identity.** Never add profile editing on /dev/null or alternate sign-in.
 2. **Keep it stupidly simple.** Text posts, follows, stars, timelines. Every addition must justify itself against the "not now" list.
 3. **Words over mechanics.** The post body is the content; chrome and metadata stay subordinate to it.
 4. **Wit in the copy, clarity in the action.** Humor lives in tone, never in labels a user needs to understand.

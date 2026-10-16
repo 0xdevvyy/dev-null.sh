@@ -83,6 +83,7 @@ export default function Show({
                 previousLane={lastAncestor ? laneOf(lastAncestor) : undefined}
                 isGroupedWithPrevious={isSameAuthor(lastAncestor, commit)}
                 initialReplies={replies}
+                endsWithDot
                 isFocused
             />
         </>

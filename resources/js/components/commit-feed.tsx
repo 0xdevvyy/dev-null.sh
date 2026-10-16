@@ -154,7 +154,6 @@ export function CommitFeed({
         highlightedAuthor !== null && userId !== highlightedAuthor;
 
     const lastCommit = listed.at(-1) ?? latestCommits.at(-1) ?? pinnedCommit;
-    const lastLane = lastCommit ? laneColor(lastCommit.user.lane) : undefined;
     const pinnedLane = pinnedCommit
         ? laneColor(pinnedCommit.user.lane)
         : firstLane;
@@ -167,10 +166,14 @@ export function CommitFeed({
         previous: Commit | undefined,
         previousLane: string | undefined,
         isGroupedWithPrevious: boolean,
+        isGroupedWithNext: boolean,
     ) => (
         <CommitCard
             commit={commit}
-            previousLane={previousLane}
+            endsWithDot={!isGroupedWithPrevious && !isGroupedWithNext}
+            railNodePosition={isGroupedWithPrevious ? 'author' : 'top'}
+            hasRailTail={!isGroupedWithPrevious || isGroupedWithNext}
+            previousLane={isGroupedWithPrevious ? previousLane : undefined}
             isDimmed={isDimmed(commit.user_id)}
             isGroupedWithPrevious={isGroupedWithPrevious}
             isPreviousDimmed={
@@ -204,6 +207,7 @@ export function CommitFeed({
                     </div>
                     <CommitCard
                         commit={pinnedCommit}
+                        endsWithDot
                         isHighlighted={
                             highlightedPeriod !== null &&
                             pinnedCommit.created_at.startsWith(
@@ -216,11 +220,7 @@ export function CommitFeed({
             )}
             {latestCommits.length > 0 && (
                 <section aria-label="Latest commits">
-                    <DayMarker
-                        label="Just now"
-                        lane={pinnedLane}
-                        isDimmed={isDimmed(pinnedCommit?.user_id)}
-                    />
+                    <DayMarker label="Just now" />
                     {latestCommits.map((commit, index) => (
                         <Fragment key={commit.id}>
                             {card(
@@ -233,16 +233,12 @@ export function CommitFeed({
                                     : pinnedLane,
                                 latestCommits[index - 1]?.user_id ===
                                     commit.user_id,
+                                latestCommits[index + 1]?.user_id ===
+                                    commit.user_id,
                             )}
                         </Fragment>
                     ))}
-                    {listed.length > 0 && (
-                        <DayMarker
-                            label="Top commits"
-                            lane={listLane}
-                            isDimmed={isDimmed(lastLatest?.user_id)}
-                        />
-                    )}
+                    {listed.length > 0 && <DayMarker label="Top commits" />}
                 </section>
             )}
             <InfiniteScroll
@@ -251,7 +247,7 @@ export function CommitFeed({
                 preserveUrl
                 loading={
                     <div role="status" aria-label="Loading more commits">
-                        <CommitSkeleton previousLane={lastLane} />
+                        <CommitSkeleton />
                         <CommitSkeleton />
                     </div>
                 }
@@ -269,15 +265,21 @@ export function CommitFeed({
                     const isGroupedWithPrevious =
                         previous?.user_id === commit.user_id &&
                         !startsDay &&
-                        (isRanked || commit.id !== firstSeenId);
+                        (isRanked || commit.id !== firstSeenId) &&
+                        !(interlude && index - 1 === interludeIndex);
+                    const next = listed[index + 1];
+                    const isGroupedWithNext =
+                        next?.user_id === commit.user_id &&
+                        (isRanked ||
+                            (localDayKey(next.created_at) ===
+                                localDayKey(commit.created_at) &&
+                                next.id !== firstSeenId)) &&
+                        !(interlude && index === interludeIndex);
 
                     return (
                         <Fragment key={commit.id}>
                             {!isRanked && commit.id === firstSeenId && (
-                                <LastVisitMarker
-                                    lane={previousLane}
-                                    isDimmed={isDimmed(previous?.user_id)}
-                                />
+                                <LastVisitMarker />
                             )}
                             {startsDay && (
                                 <DayMarker
@@ -285,8 +287,6 @@ export function CommitFeed({
                                         commit.created_at,
                                         now,
                                     )}
-                                    lane={previousLane}
-                                    isDimmed={isDimmed(previous?.user_id)}
                                 />
                             )}
                             {card(
@@ -294,6 +294,7 @@ export function CommitFeed({
                                 previous,
                                 previousLane,
                                 isGroupedWithPrevious,
+                                isGroupedWithNext,
                             )}
                             {index === interludeIndex &&
                                 interlude?.(
@@ -309,7 +310,6 @@ export function CommitFeed({
                 <div className="flex">
                     <GraphRail
                         lane={laneColor(lastCommit.user.lane)}
-                        previousLane={laneColor(lastCommit.user.lane)}
                         variant="root"
                         hasTail={false}
                     />
@@ -322,18 +322,10 @@ export function CommitFeed({
     );
 }
 
-function DayMarker({
-    label,
-    lane,
-    isDimmed,
-}: {
-    label: string;
-    lane?: string;
-    isDimmed: boolean;
-}) {
+function DayMarker({ label }: { label: string }) {
     return (
         <div className="flex">
-            <RailSegment lane={lane} isDimmed={isDimmed} />
+            <RailSegment />
             <div className="flex flex-1 items-center gap-3 border-b py-2 pr-4">
                 <h3 className="font-mono text-xs text-muted-foreground">
                     {label}
@@ -343,20 +335,14 @@ function DayMarker({
     );
 }
 
-function LastVisitMarker({
-    lane,
-    isDimmed,
-}: {
-    lane?: string;
-    isDimmed: boolean;
-}) {
+function LastVisitMarker() {
     return (
         <div
             role="separator"
             aria-label="Commits above are new since your last visit"
             className="flex"
         >
-            <RailSegment lane={lane} isDimmed={isDimmed} />
+            <RailSegment />
             <div className="flex flex-1 items-center gap-3 border-b py-2 pr-4">
                 <span className="font-mono text-xs text-muted-foreground">
                     HEAD@{'{last visit}'}
@@ -367,12 +353,12 @@ function LastVisitMarker({
     );
 }
 
-export function CommitSkeleton({ previousLane }: { previousLane?: string }) {
+export function CommitSkeleton() {
     return (
         <div aria-hidden className="flex">
             <GraphRail
                 lane="var(--rail)"
-                previousLane={previousLane ?? 'var(--rail)'}
+                endsWithDot
                 node={
                     <span className="size-12 rounded-full border-4 border-card bg-muted motion-safe:animate-pulse" />
                 }

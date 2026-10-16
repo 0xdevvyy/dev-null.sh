@@ -6,6 +6,7 @@ import CommitRejectionController from '@/actions/App/Http/Controllers/CommitReje
 import ModerationController from '@/actions/App/Http/Controllers/ModerationController';
 import { CommitFeed, EmptyFeed } from '@/components/commit-feed';
 import InputError from '@/components/input-error';
+import { ModerationTabs } from '@/components/moderation-tabs';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -261,6 +262,8 @@ export default function Show({
                         Oldest first
                     </p>
                 </div>
+
+                <ModerationTabs active="pending" />
 
                 {commits.data.length > 0 && (
                     <div className="flex h-12 items-center gap-3 border-b px-4">

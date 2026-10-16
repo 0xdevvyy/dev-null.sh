@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { SuggestedUserRow } from '@/components/who-to-follow';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { useUser } from '@/hooks/use-user';
+import { useKeyLabels } from '@/lib/keyboard';
 import { cn, laneColor } from '@/lib/utils';
 import type { SuggestedUser } from '@/types';
 
@@ -227,6 +228,7 @@ export default function Show({
         preferredLane,
     );
     const [isShowingShortcuts, setIsShowingShortcuts] = useState(false);
+    const keys = useKeyLabels();
     const headingRef = useRef<HTMLHeadingElement>(null);
 
     const next = () => setStep(step + 1);
@@ -274,7 +276,7 @@ export default function Show({
                 <StepContent
                     headingRef={headingRef}
                     title="This is you, according to GitHub."
-                    description="devnull copies your GitHub profile every time you sign in, so there's nothing to fill in. To change any of it, change it on GitHub."
+                    description="/dev/null copies your GitHub profile every time you sign in, so there's nothing to fill in. To change any of it, change it on GitHub."
                     actions={
                         <>
                             <Button onClick={next}>Looks right</Button>
@@ -409,16 +411,18 @@ export default function Show({
                                 The composer sits at the top of your log. Plain
                                 text, up to 4,000 characters; feeds fold long
                                 ones after 280. Press <Kbd>c</Kbd> to jump to
-                                it, then <Kbd>⌘</Kbd> <Kbd>↵</Kbd> to commit.
+                                it, then <Kbd>{keys.mod}</Kbd> <Kbd>↵</Kbd> to
+                                commit.
                             </dd>
                         </div>
                         <div className="px-4 py-4">
                             <dt className="font-semibold">Use the keyboard</dt>
                             <dd className="mt-1 text-pretty text-muted-foreground">
                                 <Kbd>j</Kbd> and <Kbd>k</Kbd> move between
-                                commits, <Kbd>r</Kbd> replies, <Kbd>⌘</Kbd>{' '}
-                                <Kbd>K</Kbd> finds people. Press <Kbd>?</Kbd>{' '}
-                                anywhere for the full list. It works here too.
+                                commits, <Kbd>r</Kbd> replies,{' '}
+                                <Kbd>{keys.mod}</Kbd> <Kbd>K</Kbd> finds people.
+                                Press <Kbd>?</Kbd> anywhere for the full list.
+                                It works here too.
                                 <span className="mt-3 block">
                                     <Button
                                         variant="outline"

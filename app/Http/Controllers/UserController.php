@@ -55,6 +55,7 @@ final readonly class UserController
                 ->visibleTo($currentUser)
                 ->topLevel()
                 ->withVisibleReplyCount($currentUser)
+                ->withReplyPreviews($currentUser)
                 ->withCardDataFor($currentUser)
                 ->find($user->pinned_commit_id),
             'commits' => Inertia::scroll(fn () => $user->commits()
@@ -70,6 +71,7 @@ final readonly class UserController
                         ->when($user->pinned_commit_id, fn (CommitBuilder $query, string $id): CommitBuilder => $query->whereKeyNot($id)),
                 )
                 ->withVisibleReplyCount($currentUser)
+                ->withReplyPreviews($currentUser)
                 ->withCardDataFor($currentUser)
                 ->latest()
                 ->latest('id')

@@ -8,13 +8,19 @@ import { FoldedCommitBody } from '@/components/commit-body';
 import { CommitImages } from '@/components/commit-images';
 import { CommitPoll } from '@/components/commit-poll';
 import { CommitQuoteButton } from '@/components/commit-quote-button';
+import { CommitReportButton } from '@/components/commit-report-button';
 import { CommitStarButton } from '@/components/commit-star-button';
 import {
     ThreadActions,
     ThreadReplies,
     useThread,
 } from '@/components/commit-thread';
-import { GraphRail, RailAvatar, RailDot } from '@/components/graph-rail';
+import {
+    GraphRail,
+    RailAvatar,
+    RailDot,
+    RailSegment,
+} from '@/components/graph-rail';
 import { LinkPreview } from '@/components/link-preview';
 import { QuotedCommit } from '@/components/quoted-commit';
 import { Button } from '@/components/ui/button';
@@ -47,6 +53,11 @@ export function CommitCard({
     isFolded = true,
     initialReplies,
     threadActions,
+    showImages = true,
+    loadsReplies = false,
+    endsWithDot = false,
+    railNodePosition = 'top',
+    hasRailTail = true,
 }: {
     commit: Commit;
     previousLane?: string;
@@ -61,6 +72,11 @@ export function CommitCard({
     isFolded?: boolean;
     initialReplies?: CursorPaginated<ThreadCommit>;
     threadActions?: ReactNode;
+    showImages?: boolean;
+    loadsReplies?: boolean;
+    endsWithDot?: boolean;
+    railNodePosition?: 'top' | 'center' | 'bottom' | 'author';
+    hasRailTail?: boolean;
 }) {
     const {
         props: { auth },
@@ -68,11 +84,12 @@ export function CommitCard({
     } = usePage();
     const now = useNow();
     const nodeRef = useRef<HTMLAnchorElement>(null);
-    const thread = useThread(commit, initialReplies);
+    const thread = useThread(commit, initialReplies, loadsReplies);
     const [deletion, setDeletion] = useState<
         'idle' | 'confirming' | 'deleting'
     >('idle');
 
+    const hasVisibleReplies = thread.isOpen && !!thread.replies?.length;
     const isOwn = commit.user_id === auth.user?.id;
     const isDeletable = isOwn && canDelete;
     const hash = shortHash(commit.id);
@@ -109,10 +126,16 @@ export function CommitCard({
             data-permalink={permalink.url}
             data-test="commit"
         >
-            <div className="flex min-h-0 overflow-hidden">
+            <div className="grid min-h-0 grid-cols-[4rem_minmax(0,1fr)] overflow-hidden sm:grid-cols-[4.5rem_minmax(0,1fr)]">
                 <GraphRail
                     lane={laneColor(commit.user.lane)}
                     previousLane={previousLane}
+                    endsWithDot={endsWithDot}
+                    nodePosition={railNodePosition}
+                    hasTail={hasRailTail && railNodePosition !== 'bottom'}
+                    hasReplyTail={
+                        hasVisibleReplies && (!hasRailTail || endsWithDot)
+                    }
                     isFresh={isOwn && isWithinSeconds(commit.created_at, 15)}
                     isDimmed={isDimmed}
                     isPreviousDimmed={isPreviousDimmed}
@@ -128,7 +151,9 @@ export function CommitCard({
                                 href={show(commit.user)}
                                 tabIndex={-1}
                                 className={cn('group/node flex rounded-full', {
-                                    '-translate-y-[9px]': isGroupedWithPrevious,
+                                    '-translate-y-[9px]':
+                                        isGroupedWithPrevious &&
+                                        railNodePosition === 'top',
                                 })}
                             >
                                 {isGroupedWithPrevious ? (
@@ -141,7 +166,12 @@ export function CommitCard({
                     }
                 />
 
-                <div className="min-w-0 flex-1 border-b py-3 pr-4">
+                <div
+                    className={cn(
+                        'min-w-0 pr-4',
+                        hasVisibleReplies ? 'pt-3' : 'border-b py-3',
+                    )}
+                >
                     <div className="flex">
                         <div className="min-w-0 flex-1">
                             <div className="flex items-baseline gap-1.5 text-[15px]">
@@ -272,9 +302,7 @@ export function CommitCard({
                                     isFocused ? 'text-[17px]' : 'text-[15px]',
                                 )}
                             />
-                            {commit.images && (
-                                <CommitImages images={commit.images} />
-                            )}
+                            {showImages && <CommitImages commit={commit} />}
                             {commit.poll && (
                                 <CommitPoll
                                     key={`${commit.poll.id}-${commit.poll.has_voted}-${commit.poll.total_votes}`}
@@ -287,7 +315,7 @@ export function CommitCard({
                                     commit={commit.quoted_commit ?? null}
                                 />
                             )}
-                            {commit.link_preview?.title && (
+                            {commit.link_preview && (
                                 <LinkPreview preview={commit.link_preview} />
                             )}
                             {isFocused && (
@@ -307,15 +335,13 @@ export function CommitCard({
 
                             {commit.replies_count === undefined ? (
                                 <div className="mt-1.5 -ml-1.5 flex items-center gap-0.5">
-                                    <CommitStarButton
-                                        key={`${commit.starred}-${commit.stars_count}`}
-                                        commit={commit}
-                                    />
+                                    <CommitStarButton commit={commit} />
                                     <CommitQuoteButton
                                         commit={commit}
                                         keyShortcut="q"
                                         className="px-1.5 py-1"
                                     />
+                                    <CommitReportButton commit={commit} />
                                 </div>
                             ) : (
                                 <ThreadActions
@@ -324,7 +350,6 @@ export function CommitCard({
                                     actions={
                                         <>
                                             <CommitStarButton
-                                                key={`${commit.starred}-${commit.stars_count}`}
                                                 commit={commit}
                                                 className="px-2 py-0.5"
                                             />
@@ -391,22 +416,44 @@ export function CommitCard({
                             )}
                         </div>
                     </div>
-
-                    {commit.replies_count !== undefined && (
-                        <ThreadReplies thread={thread} depth={0} />
-                    )}
                 </div>
+                {commit.replies_count !== undefined && (
+                    <>
+                        <RailSegment
+                            lane={
+                                hasRailTail && !endsWithDot
+                                    ? laneColor(commit.user.lane)
+                                    : undefined
+                            }
+                            isDimmed={isDimmed}
+                        />
+                        <div
+                            className={cn('min-w-0 pr-4', {
+                                'border-b pb-3': hasVisibleReplies,
+                            })}
+                        >
+                            <ThreadReplies thread={thread} depth={0} />
+                        </div>
+                    </>
+                )}
             </div>
         </article>
     );
 }
 
-export function CommitTombstone({ previousLane }: { previousLane?: string }) {
+export function CommitTombstone({
+    previousLane,
+    endsWithDot = false,
+}: {
+    previousLane?: string;
+    endsWithDot?: boolean;
+}) {
     return (
         <article className="flex" data-test="commit-tombstone">
             <GraphRail
                 lane="var(--rail)"
                 previousLane={previousLane}
+                endsWithDot={endsWithDot}
                 node={
                     <span className="size-12 rounded-full border-2 border-dashed border-rail bg-card" />
                 }
