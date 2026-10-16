@@ -41,6 +41,7 @@ import { useUser } from '@/hooks/use-user';
 import { signIn } from '@/lib/auth';
 import { commitStateKey } from '@/lib/commit-state';
 import { completeEmoji, suggestEmoji } from '@/lib/emoji';
+import { hasModKey } from '@/lib/keyboard';
 import {
     characterCount,
     cn,
@@ -935,11 +936,7 @@ function ReplyComposer({
             onCancel();
         }
 
-        if (
-            event.key === 'Enter' &&
-            (event.metaKey || event.ctrlKey) &&
-            isReplyable
-        ) {
+        if (event.key === 'Enter' && hasModKey(event) && isReplyable) {
             event.preventDefault();
             event.currentTarget.form?.requestSubmit();
         }
