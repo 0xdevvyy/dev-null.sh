@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Dto\NewPoll;
-use App\Dto\SeriesPosition;
 use App\Enums\CommitStatus;
 use App\Jobs\ModerateCommit;
 use App\Jobs\UnfurlLink;
@@ -39,7 +38,7 @@ final readonly class CreateCommit
      *
      * @param  list<UploadedFile>  $images
      */
-    public function handle(User $user, string $body, ?Commit $parent = null, ?Commit $quotedCommit = null, array $images = [], bool|string $linkPreview = true, ?NewPoll $poll = null, ?SeriesPosition $series = null): Commit
+    public function handle(User $user, string $body, ?Commit $parent = null, ?Commit $quotedCommit = null, array $images = [], bool|string $linkPreview = true, ?NewPoll $poll = null): Commit
     {
         $url = match ($linkPreview) {
             true => $this->urls->first($body),
@@ -47,7 +46,7 @@ final readonly class CreateCommit
             default => $linkPreview,
         };
 
-        return DB::transaction(function () use ($user, $body, $parent, $quotedCommit, $images, $url, $poll, $series): Commit {
+        return DB::transaction(function () use ($user, $body, $parent, $quotedCommit, $images, $url, $poll): Commit {
             $linkPreview = $this->linkPreviewFor($url);
             $createdAt = now();
 
@@ -58,9 +57,6 @@ final readonly class CreateCommit
                 'status' => $user->isAdmin() ? CommitStatus::Approved : CommitStatus::Pending,
                 'link_preview_id' => $linkPreview?->id,
                 'quoted_commit_id' => $quotedCommit?->id,
-                'series_id' => $series?->seriesId,
-                'series_position' => $series?->position,
-                'series_size' => $series?->size,
                 'hot_score' => $this->theAlgorithm->score($createdAt, 0, 0),
                 'created_at' => $createdAt,
             ]);

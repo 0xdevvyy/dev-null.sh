@@ -9,8 +9,9 @@ import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import CommitController from '@/actions/App/Http/Controllers/CommitController';
 import CommitReplyController from '@/actions/App/Http/Controllers/CommitReplyController';
+import { BodyCounter } from '@/components/body-counter';
 import { BookmarkButton } from '@/components/bookmark-button';
-import { CommitBody } from '@/components/commit-body';
+import { FoldedCommitBody } from '@/components/commit-body';
 import {
     ImagePickerButton,
     ImagePickerPreviews,
@@ -36,6 +37,7 @@ import { useSecretWarning } from '@/hooks/use-secret-warning';
 import { moveCaretToEnd, useHasStash, useStash } from '@/hooks/use-stash';
 import { useUser } from '@/hooks/use-user';
 import { signIn } from '@/lib/auth';
+import { maxBodyLength, minBodyLength } from '@/lib/commit';
 import { commitMutationOptions } from '@/lib/commit-mutation-options';
 import { completeEmoji, suggestEmoji } from '@/lib/emoji';
 import {
@@ -49,7 +51,6 @@ import { show } from '@/routes/user';
 import type { Commit, CursorPaginated, ThreadCommit } from '@/types';
 
 const maxIndentDepth = 3;
-const maxBodyLength = 280;
 
 const threadLayouts = {
     // Root replies line up with the commit text, and their elbow branches off the rail.
@@ -731,8 +732,9 @@ function CommitReply({
                         </p>
                     )}
 
-                    <CommitBody
+                    <FoldedCommitBody
                         segments={reply.body_segments}
+                        previewSegments={reply.preview_segments}
                         className="text-[15px]"
                     />
                     {reply.images && <CommitImages images={reply.images} />}
@@ -790,8 +792,7 @@ function ReplyComposer({
     const linkCard = useLinkCard(body);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const secrets = useSecretWarning(body);
-    const remaining = maxBodyLength - characterCount(body);
-    const isReplyable = characterCount(body.trim()) >= 3;
+    const isReplyable = characterCount(body.trim()) >= minBodyLength;
     const suggestion = suggestEmoji(body);
 
     const returnFocusToCommit = () => {
@@ -877,7 +878,7 @@ function ReplyComposer({
                         onFocus={isRestored ? moveCaretToEnd : undefined}
                         maxLength={maxBodyLength}
                         placeholder={`Reply to @${parent.user.username}`}
-                        className="block field-sizing-content min-h-9 w-full resize-none overflow-x-hidden bg-transparent px-1 text-base leading-relaxed outline-none placeholder:text-muted-foreground focus-visible:outline-none md:text-[15px]"
+                        className="block field-sizing-content max-h-[50dvh] min-h-9 w-full resize-none overflow-x-hidden overflow-y-auto bg-transparent px-1 text-base leading-relaxed outline-none placeholder:text-muted-foreground focus-visible:outline-none md:text-[15px]"
                     />
                     <EmojiSuggestionHint
                         suggestion={suggestion}
@@ -936,17 +937,7 @@ function ReplyComposer({
                                 />
                             )}
                         </div>
-                        <span
-                            className={cn(
-                                'mr-1 font-mono text-xs text-muted-foreground',
-                                {
-                                    'text-amber-700 dark:text-amber-400':
-                                        remaining <= 20,
-                                },
-                            )}
-                        >
-                            {remaining}
-                        </span>
+                        <BodyCounter body={body} className="mr-1 text-xs" />
                         <Button
                             type="button"
                             variant="ghost"

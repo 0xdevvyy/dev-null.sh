@@ -195,7 +195,7 @@ export default function Show({
                         ) : (
                             <EmptyFeed command="fatal: no commits yet">
                                 Nobody has committed anything. Be the first.
-                                It's 280 characters; you'll be fine.
+                                It's just plain text; you'll be fine.
                             </EmptyFeed>
                         )
                     }

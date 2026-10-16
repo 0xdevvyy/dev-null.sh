@@ -10,15 +10,6 @@ export type UseStashReturn = {
     readonly drop: () => void;
 };
 
-export type UseSeriesStashReturn = {
-    readonly bodies: string[];
-    readonly isRestored: boolean;
-    readonly updateBody: (index: number, body: string) => void;
-    readonly insertPart: (index: number) => void;
-    readonly removePart: (index: number) => void;
-    readonly drop: () => void;
-};
-
 const listeners = new Set<() => void>();
 const pending = new Map<string, string>();
 let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -73,6 +64,13 @@ export function moveCaretToEnd(event: FocusEvent<HTMLTextAreaElement>): void {
             textarea.value.length,
         );
     }
+}
+
+/**
+ * Drafts of series kept their later parts there. Only the first part survives, as the commit being written.
+ */
+export function discardSeriesStash(userId: string): void {
+    writeStorage(`${keyFor(userId, 'commit')}:later`, '');
 }
 
 export function clearStashes(userId: string): void {
@@ -136,83 +134,4 @@ export function useStash(userId: string, name: string): UseStashReturn {
     };
 
     return { body, isRestored, updateBody, drop } as const;
-}
-
-const readLaterBodies = (key: string): string[] => {
-    try {
-        const stored: unknown = JSON.parse(read(key) || '[]');
-
-        return Array.isArray(stored)
-            ? stored.filter((body): body is string => typeof body === 'string')
-            : [];
-    } catch {
-        return [];
-    }
-};
-
-export function useSeriesStash(
-    userId: string,
-    name: string,
-): UseSeriesStashReturn {
-    const key = keyFor(userId, name);
-    const laterKey = `${key}:later`;
-    const [bodies, setBodies] = useState(() => [
-        read(key),
-        ...readLaterBodies(laterKey),
-    ]);
-    const [isRestored, setIsRestored] = useState(() =>
-        bodies.some((body) => body !== ''),
-    );
-
-    useEffect(() => {
-        if (stashableBody(bodies) === '') {
-            discard(key);
-            discard(laterKey);
-        }
-    }, [bodies, key, laterKey]);
-
-    const store = (next: string[]): void => {
-        const [first = '', ...later] = next;
-
-        setBodies(next);
-
-        if (stashableBody(next) === '') {
-            discard(key);
-            discard(laterKey);
-
-            return;
-        }
-
-        if (first === '') {
-            discard(key);
-        } else {
-            schedule(key, first);
-        }
-
-        if (later.some((body) => body !== '')) {
-            schedule(laterKey, JSON.stringify(later));
-        } else {
-            discard(laterKey);
-        }
-
-        if (next.every((body) => body === '')) {
-            setIsRestored(false);
-        }
-    };
-
-    return {
-        bodies,
-        isRestored,
-        updateBody: (index, body) =>
-            store(bodies.map((current, at) => (at === index ? body : current))),
-        insertPart: (index) =>
-            store([...bodies.slice(0, index), '', ...bodies.slice(index)]),
-        removePart: (index) => store(bodies.filter((_, at) => at !== index)),
-        drop: () => {
-            setBodies(['']);
-            setIsRestored(false);
-            discard(key);
-            discard(laterKey);
-        },
-    } as const;
 }
