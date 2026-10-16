@@ -55,7 +55,8 @@ final class CommitBuilder extends Builder
             ->withoutMutedAuthorsFor($user)
             ->where(fn (self $query): self => $query
                 ->whereNull($query->getModel()->getQualifiedDeletedAtColumn())
-                ->orWhereHas('replies', fn (self $replies): self => $replies->withTrashed()->visibleTo($user)->withoutMutedAuthorsFor($user)));
+                ->orWhereHas('replies', fn (self $replies): self => $replies->withTrashed()->visibleTo($user)->withoutMutedAuthorsFor($user))
+                ->orWhereHas('quotes', fn (self $quotes): self => $quotes->withTrashed()->visibleTo($user)->withoutMutedAuthorsFor($user)));
     }
 
     public function topLevel(): self
@@ -68,9 +69,16 @@ final class CommitBuilder extends Builder
      */
     public function withVisibleReplyCount(?User $user): self
     {
-        return $this->withCount([
-            'replies' => fn (self $query): self => $query->visibleInThreadTo($user)->exceptSeriesContinuations(),
-        ]);
+        $replies = (new Commit)->setTable('thread_replies')->newQuery()
+            ->from((new Commit)->getTable().' as thread_replies')
+            ->selectRaw('count(*)')
+            ->where(fn (self $query): self => $query
+                ->whereColumn('thread_replies.parent_id', $this->qualifyColumn('id'))
+                ->orWhereColumn('thread_replies.quoted_commit_id', $this->qualifyColumn('id')))
+            ->visibleInThreadTo($user)
+            ->exceptSeriesContinuations();
+
+        return $this->addSelect([$this->qualifyColumn('*')])->selectSub($replies, 'replies_count');
     }
 
     /**
@@ -120,7 +128,8 @@ final class CommitBuilder extends Builder
     public function withPublicPreview(): self
     {
         return $this
-            ->withCount(['replies' => fn (self $query): self => $query->approved()->exceptSeriesContinuations(), 'stars'])
+            ->withVisibleReplyCount(null)
+            ->withCount('stars')
             ->with(['user', 'linkPreview', 'images', 'parent' => fn (BelongsTo $query): BelongsTo => $query->where('status', CommitStatus::Approved)]);
     }
 
