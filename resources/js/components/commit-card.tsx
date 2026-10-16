@@ -15,6 +15,7 @@ import {
     ThreadReplies,
     useThread,
 } from '@/components/commit-thread';
+import { CopyLinkButton } from '@/components/copy-link-button';
 import {
     GraphRail,
     RailAvatar,
@@ -334,14 +335,24 @@ export function CommitCard({
                             )}
 
                             {commit.replies_count === undefined ? (
-                                <div className="mt-1.5 -ml-1.5 flex items-center gap-0.5">
-                                    <CommitStarButton commit={commit} />
-                                    <CommitQuoteButton
-                                        commit={commit}
-                                        keyShortcut="q"
-                                        className="px-1.5 py-1"
-                                    />
-                                    <CommitReportButton commit={commit} />
+                                <div className="mt-1 -ml-2 flex items-center justify-between gap-0.5 text-[13px] not-has-[button]:hidden">
+                                    <div className="flex items-center gap-0.5">
+                                        <CommitStarButton
+                                            commit={commit}
+                                            className="px-2 py-0.5"
+                                        />
+                                        <CommitQuoteButton
+                                            commit={commit}
+                                            keyShortcut="q"
+                                        />
+                                    </div>
+                                    <div className="ml-auto flex items-center gap-0.5">
+                                        {commit.is_saved !== undefined && (
+                                            <BookmarkButton commit={commit} />
+                                        )}
+                                        <CopyLinkButton commit={commit} />
+                                        <CommitReportButton commit={commit} />
+                                    </div>
                                 </div>
                             ) : (
                                 <ThreadActions
@@ -364,13 +375,6 @@ export function CommitCard({
                             )}
 
                             {actions}
-
-                            {commit.replies_count === undefined &&
-                                commit.is_saved !== undefined && (
-                                    <div className="mt-1 -ml-1.5">
-                                        <BookmarkButton commit={commit} />
-                                    </div>
-                                )}
 
                             {deletion === 'deleting' && (
                                 <p
