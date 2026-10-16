@@ -16,12 +16,15 @@ use App\Http\Controllers\CommitSeriesController;
 use App\Http\Controllers\CommitSitemapController;
 use App\Http\Controllers\CommitStarController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\FailedJobController;
+use App\Http\Controllers\FailedJobRetryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\MentionSuggestionController;
 use App\Http\Controllers\ModerationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\SafetyController;
 use App\Http\Controllers\ScheduledCommitController;
 use App\Http\Controllers\SessionController;
@@ -158,6 +161,15 @@ Route::middleware('auth')->group(function (): void {
     Route::post('moderation/{commit}/rejection', [CommitRejectionController::class, 'store'])
         ->name('commit-rejection.store');
     Route::put('moderation', [ModerationController::class, 'update'])->name('moderation.update');
+
+    // Operations...
+    Route::get('operations', [OperationsController::class, 'show'])->name('operations.show');
+    Route::post('operations/failed-jobs/{failedJob}/retry', [FailedJobRetryController::class, 'store'])
+        ->whereUuid('failedJob')
+        ->name('failed-job-retry.store');
+    Route::delete('operations/failed-jobs/{failedJob}', [FailedJobController::class, 'destroy'])
+        ->whereUuid('failedJob')
+        ->name('failed-job.destroy');
 
     // Mention Suggestions...
     Route::get('search/mentions', [MentionSuggestionController::class, 'index'])->name('mention-suggestion.index');
