@@ -65,6 +65,23 @@ final class CommitBuilder extends Builder
     }
 
     /**
+     * Commits created after the given one, including those created in the same second with a later, time-ordered id.
+     */
+    public function newerThan(Commit $commit): self
+    {
+        return $this->where(fn (self $query): self => $query
+            ->where($this->qualifyColumn('created_at'), '>', $commit->created_at)
+            ->orWhere(fn (self $query): self => $query
+                ->where($this->qualifyColumn('created_at'), $commit->created_at)
+                ->where($this->qualifyColumn('id'), '>', $commit->id)));
+    }
+
+    public function newestFirst(): self
+    {
+        return $this->reorder()->latest()->latest('id');
+    }
+
+    /**
      * Counts only the replies the given user is allowed to see.
      */
     public function withVisibleReplyCount(?User $user): self
