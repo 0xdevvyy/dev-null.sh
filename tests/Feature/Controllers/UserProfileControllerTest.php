@@ -61,11 +61,11 @@ it('renders terminal settings page', function (): void {
             ->where('url', url('/')));
 });
 
-it('requires authentication', function (): void {
-    $response = $this->get(route('user-profile.edit'));
+it('requires authentication', function (string $route): void {
+    $response = $this->get(route($route));
 
     $response->assertRedirectToRoute('home');
-});
+})->with(['user-profile.edit', 'appearance.edit', 'terminal.show']);
 
 it('renders when the profile was last synced from github', function (?string $syncedAt): void {
     $user = User::factory()->create(['github_synced_at' => $syncedAt]);
