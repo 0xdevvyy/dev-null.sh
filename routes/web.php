@@ -36,6 +36,7 @@ use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\ReportedCommitController;
 use App\Http\Controllers\SafetyController;
 use App\Http\Controllers\ScheduledCommitController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserActivityGraphController;
@@ -123,6 +124,10 @@ Route::get('commit-images/{commitImage}', [CommitImageController::class, 'show']
 Route::get('commits/{commit}/replies', [CommitReplyController::class, 'index'])
     ->withTrashed()
     ->name('commit-reply.index');
+
+// Search...
+Route::get('search', [SearchController::class, 'index'])
+    ->name('search.index');
 
 // User Search...
 Route::get('search/users', [UserSearchController::class, 'index'])
