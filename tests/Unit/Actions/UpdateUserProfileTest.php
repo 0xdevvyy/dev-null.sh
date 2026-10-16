@@ -14,6 +14,7 @@ it('mirrors the github profile of the user', function (): void {
         'github_id' => '583231',
         'username' => 'old-username',
         'email' => 'private@example.com',
+        'has_sponsors_listing' => true,
     ]);
 
     fakeGitHubAccount($user, [
@@ -39,6 +40,7 @@ it('mirrors the github profile of the user', function (): void {
         ->location->toBe('San Francisco')
         ->website->toBe('https://github.blog')
         ->email->toBe('private@example.com')
+        ->has_sponsors_listing->toBeTrue()
         ->github_synced_at->toDateTimeString()->toBe(now()->toDateTimeString());
 });
 
