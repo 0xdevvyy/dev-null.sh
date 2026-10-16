@@ -71,7 +71,7 @@ report() {
   message="${message//'%'/%25}"
   message="${message//$'\r'/%0D}"
   message="${message//$'\n'/%0A}"
-  printf '::%s title=devnull::%s\n' "$1" "$message"
+  printf '::%s title=/dev/null::%s\n' "$1" "$message"
 }
 
 main "$@"
