@@ -39,7 +39,7 @@ const notification = {
     } as Omit<Commit, 'user'>,
 } as Notification;
 
-void test('renders a code block highlighted in a notification', async () => {
+async function render(notifications: Notification[]): Promise<string> {
     const result = await createInertiaApp({
         page: {
             component: 'notification/index',
@@ -61,7 +61,7 @@ void test('renders a code block highlighted in a notification', async () => {
         resolve: () => () => (
             <Index
                 notifications={{
-                    data: [notification],
+                    data: notifications,
                     next_cursor: null,
                     prev_cursor: null,
                 }}
@@ -72,12 +72,44 @@ void test('renders a code block highlighted in a notification', async () => {
     });
 
     assert.ok(result);
-    assert.match(
-        result.body,
-        /<pre[^>]*><span class="hl-keyword">return<\/span>/,
-    );
-    assert.doesNotMatch(result.body, /```/);
-    assert.equal(result.body.match(/<a\b/g)?.length, 1);
-    assert.doesNotMatch(result.body, /<button\b/);
-    assert.match(result.body, /<pre[^>]*tabindex="-1"/i);
+
+    return result.body;
+}
+
+void test('renders a code block highlighted in a notification', async () => {
+    const body = await render([notification]);
+
+    assert.match(body, /<pre[^>]*><span class="hl-keyword">return<\/span>/);
+    assert.doesNotMatch(body, /```/);
+    assert.equal(body.match(/<a\b/g)?.length, 1);
+    assert.doesNotMatch(body, /<button\b/);
+    assert.match(body, /<pre[^>]*tabindex="-1"/i);
 });
+
+for (const isFollowing of [false, true]) {
+    void test(`keeps ${isFollowing ? 'unfollow' : 'follow-back'} separate from highlighted notification links`, async () => {
+        const followed = {
+            ...notification,
+            id: 'follow-notification',
+            type: 'followed',
+            actor: { ...actor, is_followed: isFollowing },
+            commit: null,
+            commit_id: null,
+            subject_id: null,
+        } as Notification;
+        const body = await render([notification, followed]);
+
+        assert.match(body, /<pre[^>]*><span class="hl-keyword">return<\/span>/);
+        assert.equal(body.match(/<a\b/g)?.length, 2);
+        assert.equal(body.match(/<button\b/g)?.length, 1);
+        assert.doesNotMatch(body, /<a\b[^>]*>(?:(?!<\/a>).)*<button\b/s);
+        assert.match(
+            body,
+            new RegExp(
+                `aria-label="${isFollowing ? 'Unfollow' : 'Follow'} @mnapoli"`,
+            ),
+        );
+        assert.match(body, /followed you/);
+        assert.doesNotMatch(body, /```/);
+    });
+}
