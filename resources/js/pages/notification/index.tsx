@@ -10,13 +10,13 @@ import {
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import CommitController from '@/actions/App/Http/Controllers/CommitController';
+import { CommitBodyExcerpt } from '@/components/commit-body';
 import { EmptyFeed } from '@/components/commit-feed';
 import { Spinner } from '@/components/ui/spinner';
 import { UserAvatar } from '@/components/user-avatar';
 import { useNow } from '@/hooks/use-now';
 import { useUser } from '@/hooks/use-user';
 import AppLayout from '@/layouts/app-layout';
-import { emojify } from '@/lib/emoji';
 import { cn, formatRelativeTime, laneColor } from '@/lib/utils';
 import { show } from '@/routes/user';
 import type { CursorPaginated, Notification, User } from '@/types';
@@ -201,9 +201,10 @@ function NotificationItem({ notification }: { notification: Notification }) {
                 </p>
 
                 {notification.type !== 'followed' && (
-                    <p className="mt-1 truncate text-[15px]">
-                        {emojify(notification.commit.body)}
-                    </p>
+                    <CommitBodyExcerpt
+                        segments={notification.commit.body_segments}
+                        className="mt-1 max-h-40"
+                    />
                 )}
                 {notification.type === 'rejected' && (
                     <div className="mt-2 text-sm text-muted-foreground">
