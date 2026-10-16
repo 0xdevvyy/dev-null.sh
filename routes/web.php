@@ -26,6 +26,7 @@ use App\Http\Controllers\SafetyController;
 use App\Http\Controllers\ScheduledCommitController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\UserActivityGraphController;
 use App\Http\Controllers\UserBlockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserFeedController;
@@ -88,6 +89,11 @@ Route::get('@{user:username}/og.png', [UserOpenGraphImageController::class, 'sho
 Route::get('@{user:username}/feed.atom', [UserFeedController::class, 'show'])
     ->middleware('cache.headers:public;max_age=300;etag')
     ->name('user-feed.show');
+
+// User activity graph, embedded in READMEs...
+Route::get('@{user:username}/graph.svg', [UserActivityGraphController::class, 'show'])
+    ->middleware(['throttle:activity-graph', 'cache.headers:public;max_age=3600;etag'])
+    ->name('user-activity-graph.show');
 
 // Commit...
 Route::get('@{user:username}/commits/{commit}/og.png', [CommitOpenGraphImageController::class, 'show'])
@@ -159,7 +165,9 @@ Route::middleware('auth')->group(function (): void {
     // User Profile...
     Route::get('settings', fn () => to_route('user-profile.edit'));
     Route::get('settings/profile', [UserProfileController::class, 'edit'])->name('user-profile.edit');
-    Route::get('settings/export', ExportController::class)->name('export');
+    Route::get('settings/export', ExportController::class)
+        ->middleware('throttle:5,1')
+        ->name('export');
 
     // User Lane...
     Route::put('settings/lane', [UserLaneController::class, 'update'])->name('user-lane.update');
