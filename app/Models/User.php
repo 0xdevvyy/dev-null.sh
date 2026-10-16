@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Log;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -27,6 +28,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read string|null $company
  * @property-read int|null $preferred_lane
  * @property-read string|null $pinned_commit_id
+ * @property-read Log $log
  * @property-read string|null $remember_token
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
@@ -46,6 +48,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
     'remember_token',
     'preferred_lane',
     'pinned_commit_id',
+    'log',
 ])]
 final class User extends Authenticatable
 {
@@ -53,6 +56,13 @@ final class User extends Authenticatable
     use HasFactory;
 
     use HasUuids;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'log' => Log::Following->value,
+    ];
 
     /**
      * @return array<string, string>
@@ -72,6 +82,7 @@ final class User extends Authenticatable
             'company' => 'string',
             'preferred_lane' => 'integer',
             'pinned_commit_id' => 'string',
+            'log' => Log::class,
             'remember_token' => 'string',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',

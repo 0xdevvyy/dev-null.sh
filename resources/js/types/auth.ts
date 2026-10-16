@@ -1,3 +1,5 @@
+import type { Log } from '@/types/log';
+
 export type User = {
     id: string;
     username: string;
@@ -21,6 +23,7 @@ export type Profile = User & {
 export type Auth = {
     user: Profile;
     isAdmin: boolean;
+    log: Log;
     unreadNotificationsCount: number;
 };
 

@@ -75,6 +75,19 @@ it('updates an existing user on login', function (): void {
     $this->assertAuthenticatedAs($user);
 });
 
+it('redirects to the log the user visited last on login', function (): void {
+    User::factory()->create(['github_id' => '583231', 'log' => Log::Everyone]);
+
+    Socialite::fake('github', GitHubUser::fake([
+        'id' => '583231',
+        'nickname' => 'octocat',
+    ]));
+
+    $response = $this->get(route('login.store'));
+
+    $response->assertRedirectToRoute('log.show', Log::Everyone);
+});
+
 it('queues a sync of the ssh keys of the user on login', function (): void {
     Socialite::fake('github', GitHubUser::fake([
         'id' => '583231',

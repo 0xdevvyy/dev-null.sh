@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Enums\Log;
 use App\Models\Commit;
 use App\Models\User;
 use App\Queries\SuggestedUsersQuery;
@@ -46,6 +47,7 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => fn (): ?User => $request->user()?->loadCounts(),
                 'isAdmin' => $isAdmin,
+                'log' => fn (): ?Log => $request->user()?->log,
                 'unreadNotificationsCount' => fn (): int => $request->user()?->notifications()->relevant()->unread()->count() ?? 0,
             ],
             'hasUnmoderatedCommits' => fn (): bool => $isAdmin && Commit::query()->pending()->exists(),

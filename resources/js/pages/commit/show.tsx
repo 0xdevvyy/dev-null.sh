@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import LogController from '@/actions/App/Http/Controllers/LogController';
 import { CommitCard, CommitTombstone } from '@/components/commit-card';
@@ -18,6 +18,7 @@ export default function Show({
     ancestors: ThreadCommit[];
     replies: CursorPaginated<ThreadCommit>;
 }) {
+    const { auth } = usePage().props;
     const excerpt =
         commit.body.length > titleLength
             ? `${commit.body.slice(0, titleLength).trimEnd()}…`
@@ -30,7 +31,7 @@ export default function Show({
             return;
         }
 
-        router.visit(LogController.show('following'));
+        router.visit(LogController.show(auth.log));
     };
 
     const lastAncestor = ancestors.at(-1);
