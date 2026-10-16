@@ -25,6 +25,7 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\MentionSuggestionController;
 use App\Http\Controllers\ModerationController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationGroupController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\SafetyController;
@@ -160,6 +161,7 @@ Route::middleware('auth')->group(function (): void {
 
     // Notifications...
     Route::get('notifications', [NotificationController::class, 'index'])->name('notification.index');
+    Route::get('notifications/{notification}/group', [NotificationGroupController::class, 'show'])->name('notification-group.show');
 
     // Moderation...
     Route::get('moderation', [ModerationController::class, 'show'])->name('moderation.show');
