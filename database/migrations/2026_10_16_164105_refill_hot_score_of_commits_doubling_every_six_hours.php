@@ -48,7 +48,7 @@ return new class extends Migration
     }
 
     /**
-     * @param  array<int, mixed>  $rootIds
+     * @param  array<mixed>  $rootIds
      */
     private function repliers(array $rootIds): Builder
     {
@@ -71,7 +71,7 @@ return new class extends Migration
     }
 
     /**
-     * @param  array<int, mixed>  $rootIds
+     * @param  array<mixed>  $rootIds
      */
     private function stargazers(array $rootIds): Builder
     {
