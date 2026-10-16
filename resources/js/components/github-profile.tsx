@@ -11,6 +11,12 @@ export function GitHubProfile() {
         { label: 'company', value: auth.user.company },
         { label: 'location', value: auth.user.location },
         { label: 'website', value: auth.user.website },
+        {
+            label: 'sponsors',
+            value: auth.user.has_sponsors_listing
+                ? `github.com/sponsors/${auth.user.username}`
+                : null,
+        },
     ];
 
     return (
