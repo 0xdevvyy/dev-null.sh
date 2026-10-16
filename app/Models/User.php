@@ -28,6 +28,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read bool $has_sponsors_listing
  * @property-read int|null $preferred_lane
  * @property-read string|null $pinned_commit_id
+ * @property-read CarbonInterface|null $onboarded_at
  * @property-read string|null $remember_token
  * @property-read CarbonInterface|null $github_synced_at
  * @property-read CarbonInterface $created_at
@@ -49,6 +50,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
     'preferred_lane',
     'pinned_commit_id',
     'github_synced_at',
+    'onboarded_at',
 ])]
 final class User extends Authenticatable
 {
@@ -76,6 +78,7 @@ final class User extends Authenticatable
             'has_sponsors_listing' => 'boolean',
             'preferred_lane' => 'integer',
             'pinned_commit_id' => 'string',
+            'onboarded_at' => 'datetime',
             'remember_token' => 'string',
             'github_synced_at' => 'datetime',
             'created_at' => 'datetime',
@@ -142,6 +145,11 @@ final class User extends Authenticatable
     public function getAuthPassword(): string
     {
         return '';
+    }
+
+    public function isOnboarded(): bool
+    {
+        return $this->onboarded_at !== null;
     }
 
     public function isAdmin(): bool
