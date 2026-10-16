@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Log;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\Cli\ScriptController;
 use App\Http\Controllers\CommitApprovalController;
@@ -112,6 +113,7 @@ Route::middleware('auth')->group(function (): void {
     Route::put('onboarding', [OnboardingController::class, 'update'])->name('onboarding.update');
 
     // Log...
+    Route::get('log/everyone', fn () => to_route('log.show', Log::Trending, 301));
     Route::get('log/{log}', [LogController::class, 'show'])->name('log.show');
 
     // Private saved commits...
