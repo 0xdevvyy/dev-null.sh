@@ -15,6 +15,7 @@ import {
     ThreadReplies,
     useThread,
 } from '@/components/commit-thread';
+import { CopyLinkButton } from '@/components/copy-link-button';
 import {
     GraphRail,
     RailAvatar,
@@ -370,11 +371,14 @@ export function CommitCard({
                                             commit={commit}
                                             keyShortcut="q"
                                         />
+                                    </div>
+                                    <div className="ml-auto flex items-center gap-0.5">
+                                        {commit.is_saved !== undefined && (
+                                            <BookmarkButton commit={commit} />
+                                        )}
+                                        <CopyLinkButton commit={commit} />
                                         <CommitReportButton commit={commit} />
                                     </div>
-                                    {commit.is_saved !== undefined && (
-                                        <BookmarkButton commit={commit} />
-                                    )}
                                 </div>
                             ) : (
                                 <ThreadActions
