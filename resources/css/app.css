@@ -124,6 +124,7 @@
     --ring: #3b6fe0;
     --rail: #d3d7dd;
     --radius: 0.5rem;
+    --brand: #ff2d20;
 
     --lane-0: #d9480f;
     --lane-1: #2f9e44;
@@ -237,7 +238,7 @@
 
     .hl-type,
     .hl-generic {
-        color: var(--lane-2);
+        color: var(--brand);
     }
 
     .hl-property {
