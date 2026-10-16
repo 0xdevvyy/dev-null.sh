@@ -44,13 +44,13 @@ final readonly class OpenAI
     private const float RELEVANCE_THRESHOLD = 0.5;
 
     private const string MINORS_INSTRUCTIONS = <<<'TEXT'
-        You review images uploaded to devnull, a social network for developers, before they are published.
+        You review images uploaded to /dev/null, a social network for developers, before they are published.
         Answer whether any person in the images is, or could plausibly be, under 18 years old. That includes babies,
         children and teenagers, whether in photos, drawings, renders or any other depiction. When unsure, answer true.
         TEXT;
 
     private const string HARMFUL_INSTRUCTIONS = <<<'TEXT'
-        You review posts on devnull, a social network for developers, before they are published.
+        You review posts on /dev/null, a social network for developers, before they are published.
         Answer whether the post is harmful: a threat, including claims of having a bomb, weapon or explosive, or of
         planning an attack, even as a joke; violence, incitement or glorification of it; hate speech or harassment of a
         person or group; sexual content; encouragement of self-harm; or illegal activity. Developer jargon such as

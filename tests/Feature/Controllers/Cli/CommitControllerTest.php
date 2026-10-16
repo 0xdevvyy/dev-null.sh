@@ -148,7 +148,7 @@ it('rejects keys that are no longer on github', function (): void {
     $response = postSignedCommit(signedCommit($keyPair, 'It was DNS.'));
 
     $response->assertUnauthorized()
-        ->assertContent("This SSH key ({$keyPair->publicKey->fingerprint()}) is not on the GitHub account of a devnull user.\n");
+        ->assertContent("This SSH key ({$keyPair->publicKey->fingerprint()}) is not on the GitHub account of a /dev/null user.\n");
 });
 
 it('validates the commit', function (string $body, string $message): void {

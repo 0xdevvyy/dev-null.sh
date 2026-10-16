@@ -276,7 +276,7 @@ export default function Show({
                 <StepContent
                     headingRef={headingRef}
                     title="This is you, according to GitHub."
-                    description="devnull copies your GitHub profile every time you sign in, so there's nothing to fill in. To change any of it, change it on GitHub."
+                    description="/dev/null copies your GitHub profile every time you sign in, so there's nothing to fill in. To change any of it, change it on GitHub."
                     actions={
                         <>
                             <Button onClick={next}>Looks right</Button>
