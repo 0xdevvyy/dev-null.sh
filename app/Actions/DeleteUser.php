@@ -52,8 +52,8 @@ final readonly class DeleteUser
     }
 
     /**
-     * The commits the user starred and their own commits, whose threads, and the threads they quoted, rank lower once
-     * the user's stars, replies and quotes are gone.
+     * The commits the user starred, and their replies and quotes, whose threads rank lower once the user's stars,
+     * replies and quotes are gone.
      *
      * @return array<int, string>
      */
@@ -61,7 +61,12 @@ final readonly class DeleteUser
     {
         return [
             ...$user->starredCommits()->get(['commits.id'])->map(fn (Commit $commit): string => $commit->id)->all(),
-            ...$user->commits()->withTrashed()->get(['id'])->map(fn (Commit $commit): string => $commit->id)->all(),
+            ...$user->commits()
+                ->withTrashed()
+                ->where(fn (CommitBuilder $query): CommitBuilder => $query->whereNotNull('root_id')->orWhereNotNull('quoted_commit_id'))
+                ->get(['id'])
+                ->map(fn (Commit $commit): string => $commit->id)
+                ->all(),
         ];
     }
 

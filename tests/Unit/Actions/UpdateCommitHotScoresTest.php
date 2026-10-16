@@ -53,3 +53,14 @@ it('rescores the thread of the commit a quote quotes', function (): void {
     expect($commit->fresh()->hot_score)
         ->toEqualWithDelta(resolve(TheAlgorithm::class)->score($commit->created_at, 0, 2), 1e-9);
 });
+
+it('does not count quotes of replies others cannot see', function (): void {
+    $commit = Commit::factory()->create();
+    $reply = Commit::factory()->rejected()->for($commit, 'parent')->create();
+    Commit::factory()->for($reply, 'quotedCommit')->create();
+
+    resolve(UpdateCommitHotScores::class)->handle([$commit->id]);
+
+    expect($commit->fresh()->hot_score)
+        ->toEqualWithDelta(resolve(TheAlgorithm::class)->score($commit->created_at, 0, 0), 1e-9);
+});
