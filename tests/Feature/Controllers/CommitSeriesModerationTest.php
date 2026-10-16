@@ -70,7 +70,7 @@ it('loads the queue with the same number of queries however many series wait', f
     expect($queries())->toBe($once);
 });
 
-it('approves every part of a series at once and notifies the author once', function (): void {
+it('approves every part of a series at once without notifying the author', function (): void {
     $parts = commitSeries(status: CommitStatus::Pending);
 
     $this->actingAs($this->admin)
@@ -79,9 +79,7 @@ it('approves every part of a series at once and notifies the author once', funct
         ->assertRedirectToRoute('moderation.show');
 
     expect(Commit::query()->whereKey($parts->modelKeys())->pluck('status')->unique()->all())->toBe([CommitStatus::Approved])
-        ->and($parts[0]->user->notifications()->sole())
-        ->type->toBe(NotificationType::Approved)
-        ->commit_id->toBe($parts[0]->id);
+        ->and($parts[0]->user->notifications()->count())->toBe(0);
 });
 
 it('rejects every part of a series at once so no part is left without the one before it', function (): void {
@@ -105,7 +103,7 @@ it('notifies about the first remaining part when the first part of a series was 
 
     $this->actingAs($this->admin)
         ->fromRoute('moderation.show')
-        ->post(route('commit-approval.store', $parts[1]));
+        ->post(route('commit-rejection.store', $parts[1]), ['reason' => 'Spam']);
 
     expect($parts[0]->user->notifications()->sole()->commit_id)->toBe($parts[1]->id);
 });
@@ -120,6 +118,5 @@ it('approves the whole series when approving the selected commits', function ():
         ->assertRedirectToRoute('moderation.show');
 
     expect(Commit::query()->pending()->count())->toBe(0)
-        ->and(Notification::query()->pluck('commit_id')->sort()->values()->all())
-        ->toBe(collect([$parts[0]->id, $other->id])->sort()->values()->all());
+        ->and(Notification::query()->count())->toBe(0);
 });
