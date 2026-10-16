@@ -25,6 +25,7 @@ use App\Http\Controllers\SafetyController;
 use App\Http\Controllers\ScheduledCommitController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\UserActivityGraphController;
 use App\Http\Controllers\UserBlockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserFeedController;
@@ -87,6 +88,11 @@ Route::get('@{user:username}/og.png', [UserOpenGraphImageController::class, 'sho
 Route::get('@{user:username}/feed.atom', [UserFeedController::class, 'show'])
     ->middleware('cache.headers:public;max_age=300;etag')
     ->name('user-feed.show');
+
+// User activity graph, embedded in READMEs...
+Route::get('@{user:username}/graph.svg', [UserActivityGraphController::class, 'show'])
+    ->middleware(['throttle:activity-graph', 'cache.headers:public;max_age=3600;etag'])
+    ->name('user-activity-graph.show');
 
 // Commit...
 Route::get('@{user:username}/commits/{commit}/og.png', [CommitOpenGraphImageController::class, 'show'])
