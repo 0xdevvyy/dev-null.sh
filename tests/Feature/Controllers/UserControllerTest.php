@@ -37,6 +37,7 @@ it('renders a user profile', function (): void {
             ->missing('user.github_id')
             ->where('isFollowing', true)
             ->where('followsYou', false)
+            ->has('achievements')
             ->has('commits.data', 2)
             ->where('commits.data.0.body', 'Newer')
             ->where('commits.data.0.user.username', 'octocat')
@@ -74,7 +75,8 @@ it('does not count the user relations or activity when reloading only commits', 
                 ->missing('isFollowing')
                 ->missing('followsYou')
                 ->missing('tab')
-                ->missing('activity'));
+                ->missing('activity')
+                ->missing('achievements'));
         });
 
     expect(collect(DB::getQueryLog())
