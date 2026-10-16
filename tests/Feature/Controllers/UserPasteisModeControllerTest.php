@@ -32,7 +32,7 @@ it('rejects missing or invalid settings without changing the mode', function (ar
         ->assertUnprocessable()->assertJsonValidationErrors('enabled');
 
     expect($user->refresh()->pasteis_mode)->toBeFalse();
-})->with([fn () => [], fn () => ['enabled' => 'yes'], fn () => ['enabled' => null]]);
+})->with([fn (): array => [], fn (): array => ['enabled' => 'yes'], fn (): array => ['enabled' => null]]);
 
 it('requires authentication', function (): void {
     $this->putJson(route('user-pasteis-mode.update'), ['enabled' => true])->assertUnauthorized();
