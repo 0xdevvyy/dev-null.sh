@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { ArrowUpRight, Download, RefreshCw } from 'lucide-react';
 import ExportController from '@/actions/App/Http/Controllers/ExportController';
 import UserProfileController from '@/actions/App/Http/Controllers/UserProfileController';
@@ -81,6 +81,7 @@ export default function Edit({
                     <Form
                         {...UserProfileController.update.form()}
                         options={{ preserveScroll: true }}
+                        onSuccess={() => router.flushAll()}
                     >
                         {({ processing }) => (
                             <Button

@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, router } from '@inertiajs/react';
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import UserLaneController from '@/actions/App/Http/Controllers/UserLaneController';
@@ -140,6 +140,7 @@ export default function LanePicker({
             <Form
                 {...UserLaneController.update.form()}
                 options={{ preserveScroll: true }}
+                onSuccess={() => router.flushAll()}
                 className="mt-5"
             >
                 {({ processing, errors }) => (
