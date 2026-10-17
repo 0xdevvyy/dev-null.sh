@@ -221,11 +221,19 @@ export function UserPreview({
         <>
             <span
                 ref={triggerRef}
-                onMouseEnter={() => {
+                onPointerEnter={(event) => {
+                    if (event.pointerType !== 'mouse') {
+                        return;
+                    }
+
                     onHoverChange?.(true);
                     scheduleOpen();
                 }}
-                onMouseLeave={() => {
+                onPointerLeave={(event) => {
+                    if (event.pointerType !== 'mouse') {
+                        return;
+                    }
+
                     onHoverChange?.(false);
                     scheduleClose();
                 }}
@@ -241,11 +249,19 @@ export function UserPreview({
                         ref={previewRef}
                         role="dialog"
                         aria-label={`About @${previewUser.username}`}
-                        onMouseEnter={() => {
+                        onPointerEnter={(event) => {
+                            if (event.pointerType !== 'mouse') {
+                                return;
+                            }
+
                             onHoverChange?.(true);
                             keepOpen();
                         }}
-                        onMouseLeave={() => {
+                        onPointerLeave={(event) => {
+                            if (event.pointerType !== 'mouse') {
+                                return;
+                            }
+
                             onHoverChange?.(false);
                             scheduleClose();
                         }}

@@ -56,6 +56,28 @@ export function CommitFeed({
     const [highlightedAuthor, setHighlightedAuthor] = useState<string | null>(
         null,
     );
+    const [highlightedCommit, setHighlightedCommit] = useState<string | null>(
+        null,
+    );
+    const unhighlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    useEffect(() => () => clearTimeout(unhighlightTimer.current), []);
+
+    const highlightCommit = (commitId: string, isHovering: boolean) => {
+        clearTimeout(unhighlightTimer.current);
+
+        if (isHovering) {
+            setHighlightedCommit(commitId);
+
+            return;
+        }
+
+        // Crossing a day marker between two commits shouldn't flash the whole feed back on.
+        unhighlightTimer.current = setTimeout(
+            () => setHighlightedCommit(null),
+            150,
+        );
+    };
 
     useEffect(
         () =>
@@ -148,8 +170,10 @@ export function CommitFeed({
         return <div className="px-6 py-16 text-center sm:px-12">{empty}</div>;
     }
 
-    const isDimmed = (userId: string | undefined) =>
-        highlightedAuthor !== null && userId !== highlightedAuthor;
+    const isDimmed = (commit: Commit) =>
+        highlightedAuthor !== null
+            ? commit.user_id !== highlightedAuthor
+            : highlightedCommit !== null && commit.id !== highlightedCommit;
 
     const lastCommit = listed.at(-1) ?? latestCommits.at(-1) ?? pinnedCommit;
     const interludeIndex = Math.min(interludeAfter, listed.length) - 1;
@@ -160,7 +184,7 @@ export function CommitFeed({
         <CommitCard
             commit={commit}
             endsWithDot
-            isDimmed={isDimmed(commit.user_id)}
+            isDimmed={isDimmed(commit)}
             isHighlighted={
                 highlightedPeriod !== null &&
                 commit.created_at.startsWith(highlightedPeriod)
@@ -171,6 +195,7 @@ export function CommitFeed({
             onAuthorHover={(isHovering) =>
                 setHighlightedAuthor(isHovering ? commit.user_id : null)
             }
+            onHover={(isHovering) => highlightCommit(commit.id, isHovering)}
         />
     );
 
@@ -188,6 +213,10 @@ export function CommitFeed({
                     <CommitCard
                         commit={pinnedCommit}
                         endsWithDot
+                        isDimmed={isDimmed(pinnedCommit)}
+                        onHover={(isHovering) =>
+                            highlightCommit(pinnedCommit.id, isHovering)
+                        }
                         isHighlighted={
                             highlightedPeriod !== null &&
                             pinnedCommit.created_at.startsWith(
@@ -243,7 +272,7 @@ export function CommitFeed({
                             {index === interludeIndex &&
                                 interlude?.(
                                     laneColor(commit.user.lane),
-                                    isDimmed(commit.user_id),
+                                    isDimmed(commit),
                                 )}
                         </Fragment>
                     );
