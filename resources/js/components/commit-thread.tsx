@@ -13,6 +13,7 @@ import CommitReplyController from '@/actions/App/Http/Controllers/CommitReplyCon
 import { BodyCounter } from '@/components/body-counter';
 import { FoldedCommitBody } from '@/components/commit-body';
 import {
+    ImageDropOverlay,
     ImagePickerButton,
     ImagePickerPreviews,
     imageErrorFrom,
@@ -1045,9 +1046,13 @@ function ReplyComposer({
     return (
         <form
             onSubmit={submit}
-            className="mt-2 rounded-lg border bg-background p-2.5 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+            {...attachments.dropzone}
+            className="relative mt-2 rounded-lg border bg-background p-2.5 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
             data-test="reply-composer"
         >
+            {attachments.isDraggingFiles && (
+                <ImageDropOverlay className="-inset-px" />
+            )}
             <label htmlFor={`reply-${parent.id}`} className="sr-only">
                 Reply to @{parent.user.username}
             </label>
@@ -1062,8 +1067,6 @@ function ReplyComposer({
                     onValueChange={updateBody}
                     onKeyDown={onKeyDown}
                     onPaste={attachments.onPaste}
-                    onDragOver={attachments.onDragOver}
-                    onDrop={attachments.onDrop}
                     onFocus={isRestored ? moveCaretToEnd : undefined}
                     maxLength={maxBodyLength}
                     placeholder={`Reply to @${parent.user.username}`}
