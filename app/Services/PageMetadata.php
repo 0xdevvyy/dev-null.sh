@@ -83,6 +83,39 @@ final readonly class PageMetadata
     }
 
     /**
+     * The link preview and structured data of a static page, such as the terms of service or the privacy policy.
+     *
+     * @return array{type: string, title: string, description: string, url: string, robots: string, images: list<Image>, structuredData: array<string, mixed>}
+     */
+    public function page(string $title, string $description, string $url): array
+    {
+        return [
+            'type' => 'website',
+            'title' => $title,
+            'description' => $description,
+            'url' => $url,
+            'robots' => self::INDEXABLE,
+            'images' => [[
+                'url' => url('/og.png'),
+                'width' => OpenGraphCanvas::WIDTH,
+                'height' => OpenGraphCanvas::HEIGHT,
+                'type' => 'image/png',
+                'alt' => $title,
+            ]],
+            'structuredData' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'WebPage',
+                '@id' => $url,
+                'url' => $url,
+                'name' => $title,
+                'description' => $description,
+                'inLanguage' => str_replace('_', '-', app()->getLocale()),
+                'isPartOf' => ['@id' => route('home').'#website'],
+            ],
+        ];
+    }
+
+    /**
      * The link preview and structured data of a commit, from its public preview, stars count, images, and the replies shown under it.
      * The commit's own images are previewed first, with its drawn card as a fallback.
      *
