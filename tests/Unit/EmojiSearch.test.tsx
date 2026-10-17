@@ -10,11 +10,24 @@ test('suggests the shortcodes starting with the query first, shortest first', ()
     assert.ok(names.every((name) => name.startsWith('smi')));
 });
 
-test('falls back to the shortcodes containing the query, ignoring case', () => {
-    const names = searchEmoji('CAT').map((emoji) => emoji.name);
+test('falls back to the shortcodes with a word starting with the query, ignoring case', () => {
+    const names = searchEmoji('ART').map((emoji) => emoji.name);
 
-    assert.equal(names[0], 'cat');
-    assert.ok(names.slice(1).every((name) => name.includes('cat')));
+    assert.deepEqual(names.slice(0, 2), ['art', 'artist']);
+    assert.ok(names.includes('man_artist'));
+    assert.ok(names.includes('performing_arts'));
+});
+
+test('leaves out the shortcodes that only contain the query inside a word', () => {
+    const names = searchEmoji('ok').map((emoji) => emoji.name);
+
+    assert.deepEqual(names, [
+        'ok',
+        'ok_man',
+        'ok_hand',
+        'ok_woman',
+        'ok_person',
+    ]);
 });
 
 test('limits the suggestions and pairs each shortcode with its emoji', () => {

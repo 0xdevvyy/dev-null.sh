@@ -40,7 +40,7 @@ export type EmojiSuggestion = {
 };
 
 /**
- * The shortcodes that start with the query, shortest first, then the ones that only contain it.
+ * The shortcodes that start with the query, shortest first, then the ones with a later word starting with it.
  */
 export function searchEmoji(query: string, limit = 8): EmojiSuggestion[] {
     const partial = query.toLowerCase();
@@ -52,7 +52,9 @@ export function searchEmoji(query: string, limit = 8): EmojiSuggestion[] {
         ...names.filter((name) => name.startsWith(partial)).sort(byLength),
         ...names
             .filter(
-                (name) => !name.startsWith(partial) && name.includes(partial),
+                (name) =>
+                    !name.startsWith(partial) &&
+                    name.split(/[_-]/).some((word) => word.startsWith(partial)),
             )
             .sort(byLength),
     ]
