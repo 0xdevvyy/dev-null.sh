@@ -38,7 +38,12 @@ import {
 import { useUser } from '@/hooks/use-user';
 import { maxBodyLength, minBodyLength } from '@/lib/commit';
 import { hasModKey, useKeyLabels } from '@/lib/keyboard';
-import { characterCount, cn, laneColor } from '@/lib/utils';
+import {
+    characterCount,
+    cn,
+    isRejectedSubmission,
+    laneColor,
+} from '@/lib/utils';
 import type { User } from '@/types';
 
 function focusBody(id: string): void {
@@ -105,7 +110,6 @@ function CommitComposerBody({
         setIsScheduling,
     } = schedule;
     const hasImages = attachments.images.length > 0;
-    const isSchedulingImages = isScheduling && hasImages;
     const isFilled = characterCount(body.trim()) >= minBodyLength;
     const error = errors.body ?? errors.link_preview_url;
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -202,12 +206,7 @@ function CommitComposerBody({
                         />
                     )}
                     <InputError
-                        message={
-                            attachments.error ??
-                            (isSchedulingImages
-                                ? "Images can't be scheduled yet. Remove them to schedule this commit."
-                                : imageErrorFrom(errors))
-                        }
+                        message={attachments.error ?? imageErrorFrom(errors)}
                         className="mt-1"
                     />
 
@@ -287,23 +286,18 @@ function CommitComposerBody({
 
                     <div className="mt-2 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
                         <div className="mr-auto flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-                            {!isScheduling && (
-                                <ImagePickerButton
-                                    count={attachments.images.length}
-                                    disabled={processing || poll !== null}
-                                    onPick={attachments.attach}
-                                    className="-ml-2"
-                                />
-                            )}
+                            <ImagePickerButton
+                                count={attachments.images.length}
+                                disabled={processing || poll !== null}
+                                onPick={attachments.attach}
+                                className="-ml-2"
+                            />
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
                                 disabled={
-                                    processing ||
-                                    poll !== null ||
-                                    hasImages ||
-                                    isScheduling
+                                    processing || poll !== null || hasImages
                                 }
                                 onClick={() => {
                                     setPoll(emptyPollDraft);
@@ -317,11 +311,9 @@ function CommitComposerBody({
                                 }}
                                 aria-label="Add poll"
                                 title={
-                                    isScheduling
-                                        ? 'Polls cannot be scheduled yet'
-                                        : hasImages
-                                          ? 'A commit can have images or a poll, not both'
-                                          : 'Add poll'
+                                    hasImages
+                                        ? 'A commit can have images or a poll, not both'
+                                        : 'Add poll'
                                 }
                                 className="text-muted-foreground"
                                 data-test="add-poll-button"
@@ -355,17 +347,7 @@ function CommitComposerBody({
                             size="sm"
                             aria-expanded={isScheduling}
                             aria-controls={`${id}-schedule`}
-                            disabled={
-                                processing ||
-                                (!isScheduling && (hasImages || poll !== null))
-                            }
-                            title={
-                                !isScheduling && poll !== null
-                                    ? 'Polls cannot be scheduled yet'
-                                    : !isScheduling && hasImages
-                                      ? "Images can't be scheduled yet"
-                                      : undefined
-                            }
+                            disabled={processing}
                             onClick={() => {
                                 setTimezone(
                                     Intl.DateTimeFormat().resolvedOptions()
@@ -444,15 +426,11 @@ export function CommitComposer({
         (poll === null ||
             poll.options.every((option) => option.trim().length > 0));
     const hasImages = attachments.images.length > 0;
-    const isSubmittable =
-        isCommittable &&
-        !(isScheduling && hasImages) &&
-        (!isScheduling || poll === null);
 
     useEffect(() => discardSeriesStash(user.id), [user.id]);
 
     const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-        if (event.key === 'Enter' && hasModKey(event) && isSubmittable) {
+        if (event.key === 'Enter' && hasModKey(event) && isCommittable) {
             event.preventDefault();
             event.currentTarget.form?.requestSubmit();
         }
@@ -464,25 +442,21 @@ export function CommitComposer({
                 ? ScheduledCommitController.store.form()
                 : CommitController.store.form())}
             onBefore={secrets.beforeSubmit}
-            transform={(data) =>
-                isScheduling
-                    ? {
-                          ...data,
-                          scheduled_at: new Date(scheduledAt)
-                              .toISOString()
-                              .replace(/\.\d{3}Z$/, '+00:00'),
-                      }
-                    : hasImages
-                      ? {
-                            ...data,
-                            images: attachments.images,
-                            image_descriptions: attachments.descriptions,
-                        }
-                      : data
-            }
+            transform={(data) => ({
+                ...data,
+                ...(hasImages && {
+                    images: attachments.images,
+                    image_descriptions: attachments.descriptions,
+                }),
+                ...(isScheduling && {
+                    scheduled_at: new Date(scheduledAt)
+                        .toISOString()
+                        .replace(/\.\d{3}Z$/, '+00:00'),
+                }),
+            })}
             options={{ preserveScroll: true }}
             onSuccess={(page) => {
-                if (!page.flash.committed && !page.flash.scheduled) {
+                if (isRejectedSubmission(page.flash)) {
                     return;
                 }
 
@@ -513,7 +487,7 @@ export function CommitComposer({
                     poll={poll}
                     setPoll={setPoll}
                     secrets={secrets}
-                    isSubmittable={isSubmittable}
+                    isSubmittable={isCommittable}
                     processing={processing}
                     errors={errors}
                     onKeyDown={onKeyDown}
