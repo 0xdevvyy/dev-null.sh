@@ -6,9 +6,11 @@ import {
     Heart,
     Link2,
     MapPin,
+    MessagesSquare,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
+import ConversationController from '@/actions/App/Http/Controllers/ConversationController';
 import { show } from '@/actions/App/Http/Controllers/UserController';
 import UserFollowersController from '@/actions/App/Http/Controllers/UserFollowersController';
 import UserFollowingController from '@/actions/App/Http/Controllers/UserFollowingController';
@@ -48,6 +50,7 @@ export default function Show({
     isFollowing,
     followsYou,
     isMuting,
+    canPush,
     activity,
     streaks,
     achievements,
@@ -60,6 +63,7 @@ export default function Show({
     isFollowing: boolean;
     followsYou: boolean;
     isMuting: boolean;
+    canPush: boolean;
     activity: Activity;
     streaks: Streaks;
     achievements: Achievements;
@@ -137,6 +141,26 @@ export default function Show({
                                         isMuting={isMuting}
                                         isBlocking={false}
                                     />
+                                )}
+                                {canPush && (
+                                    <Button
+                                        variant="outline"
+                                        className="sm:min-w-24"
+                                        asChild
+                                    >
+                                        <Link
+                                            href={ConversationController.show(
+                                                user,
+                                            )}
+                                            aria-label={`Remote @${user.username}`}
+                                            data-test="profile-remote"
+                                        >
+                                            <MessagesSquare />
+                                            <span className="hidden sm:inline">
+                                                Remote
+                                            </span>
+                                        </Link>
+                                    </Button>
                                 )}
                                 <FollowButton
                                     user={user}
