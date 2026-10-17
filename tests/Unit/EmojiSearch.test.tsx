@@ -18,16 +18,10 @@ test('falls back to the shortcodes with a word starting with the query, ignoring
     assert.ok(names.includes('performing_arts'));
 });
 
-test('leaves out the shortcodes that only contain the query inside a word', () => {
-    const names = searchEmoji('ok').map((emoji) => emoji.name);
+test('lists the shortcodes containing the query inside a word last', () => {
+    const names = searchEmoji('apple').map((emoji) => emoji.name);
 
-    assert.deepEqual(names, [
-        'ok',
-        'ok_man',
-        'ok_hand',
-        'ok_woman',
-        'ok_person',
-    ]);
+    assert.deepEqual(names, ['apple', 'green_apple', 'pineapple']);
 });
 
 test('limits the suggestions and pairs each shortcode with its emoji', () => {
