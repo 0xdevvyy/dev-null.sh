@@ -16,6 +16,7 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { formatFullDateTime } from '@/lib/utils';
 import { show } from '@/routes/user';
+import type { Lane } from '@/types';
 
 function formatSyncedAgo(date: string, now: Date): string {
     const seconds = Math.round(
@@ -46,7 +47,7 @@ export default function Edit({
     activityGraphUrl,
     profileUrl,
 }: {
-    preferredLane: number | null;
+    preferredLane: Lane | null;
     automaticLane: number;
     githubSyncedAt: string | null;
     activityGraphUrl: string;
