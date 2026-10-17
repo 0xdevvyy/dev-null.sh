@@ -309,13 +309,10 @@ export default function Show({
                             height={20}
                             className="size-5 shrink-0 object-contain"
                         />
-                        <span
-                            className="inline-block w-[4ch] truncate font-mono font-medium text-foreground tabular-nums"
-                            title={String(pasteisCount)}
-                        >
+                        <span className="font-mono font-medium text-foreground tabular-nums">
                             {pasteisCount}
-                        </span>{' '}
-                        pastéis received
+                        </span>
+                        {pluralize(pasteisCount, 'pastel', 'pastéis')} received
                     </p>
                 )}
             </header>
