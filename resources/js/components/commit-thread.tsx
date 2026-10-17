@@ -770,7 +770,12 @@ function CommitReply({
                         >
                             <UserAvatar
                                 user={reply.user}
-                                className="size-6 sm:size-7"
+                                className="size-6 ring-2 ring-(--lane) ring-offset-2 ring-offset-card sm:size-7"
+                                style={
+                                    {
+                                        '--lane': laneOf(reply),
+                                    } as CSSProperties
+                                }
                             />
                         </Link>
                     </UserPreview>
