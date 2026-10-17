@@ -8,7 +8,7 @@ export const maxImages = 3;
 export const maxDescriptionLength = 1000;
 
 const maxImageBytes = 10 * 1024 * 1024;
-const acceptedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
 /**
  * Keeps the files the server would accept, and tells why any others were left out.
@@ -26,7 +26,7 @@ export function pickImages(
     if (accepted.length < picked.length) {
         return {
             images,
-            error: 'Only JPEG, PNG, GIF, or WebP images up to 10 MB.',
+            error: 'Only JPEG, PNG, or WebP images up to 10 MB.',
         };
     }
 
