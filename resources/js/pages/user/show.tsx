@@ -108,6 +108,7 @@ export default function Show({
                     <UserAvatar
                         user={user}
                         className="size-20 text-2xl ring-2 ring-(--lane) ring-offset-4 ring-offset-card"
+                        pixels={160}
                         style={{ '--lane': lane } as CSSProperties}
                     />
 
